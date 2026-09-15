@@ -99,6 +99,8 @@ services:
     depends_on:
       topic-init:
         condition: service_completed_successfully
+      schema-registry-init:
+        condition: service_completed_successfully
       minio-init:
         condition: service_completed_successfully
 
@@ -134,8 +136,37 @@ services:
       - "5000:5000"
     volumes:
       - mlflow-data:/mlflow
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/version', timeout=3)"]
+      interval: 5s
+      timeout: 4s
+      retries: 30
     depends_on:
       minio-init:
+        condition: service_completed_successfully
+
+  model-trainer:
+    build:
+      context: .
+      dockerfile: docker/full-stack/Dockerfile.mlops
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    command: python mlops/train_models.py
+    depends_on:
+      mlflow:
+        condition: service_healthy
+
+  model-api:
+    build:
+      context: .
+      dockerfile: docker/full-stack/Dockerfile.mlops
+    environment:
+      MLFLOW_TRACKING_URI: http://mlflow:5000
+    command: uvicorn services.model_api:app --host 0.0.0.0 --port 8010
+    ports:
+      - "8010:8010"
+    depends_on:
+      model-trainer:
         condition: service_completed_successfully
 
   prometheus:
@@ -147,6 +178,7 @@ services:
     depends_on:
       - stream-gateway
       - spark-streaming
+      - model-api
 
   grafana:
     image: grafana/grafana:11.3.0
