@@ -1,0 +1,39 @@
+name: scale-evidence
+
+on:
+  pull_request:
+    paths:
+      - 'scale/**'
+      - 'tests/unit/test_scale_harness.py'
+      - '.github/workflows/scale-evidence.yml'
+  workflow_dispatch:
+
+jobs:
+  deterministic-scale-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Generate trillion-address-space manifest and sample
+        run: python scale/transaction_universe.py --output runtime/scale --sample-rows 25000
+      - name: Validate addressable cardinality and evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          evidence = json.loads(Path('runtime/scale/scale_evidence.json').read_text())
+          assert evidence['manifest']['logical_transaction_cardinality'] == 1_000_000_000_000
+          assert evidence['manifest']['materialized_row_count'] == 0
+          assert evidence['sample_materialization']['rows'] == 25_000
+          assert evidence['determinism']['deterministic'] is True
+          assert evidence['determinism']['id_collision_count'] == 0
+          print(json.dumps(evidence, indent=2))
+          PY
+      - name: Upload scale evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: trillion-transaction-address-space-evidence
+          path: runtime/scale/
+          retention-days: 30
