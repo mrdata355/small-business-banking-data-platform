@@ -5,7 +5,6 @@ import dataclasses
 import hashlib
 import json
 import math
-import os
 import random
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -45,7 +44,7 @@ class TreasuryTransaction:
 
 
 def _digest(*parts: object, length: int = 24) -> str:
-    raw = "|".join(str(p) for p in parts).encode("utf-8")
+    raw = "|".join(str(part) for part in parts).encode("utf-8")
     return hashlib.sha256(raw).hexdigest()[:length].upper()
 
 
@@ -56,18 +55,24 @@ def deterministic_uniform(ordinal: int, salt: str) -> float:
 
 
 def deterministic_choice(ordinal: int, values: Sequence[str], salt: str) -> str:
-    return values[min(len(values) - 1, int(deterministic_uniform(ordinal, salt) * len(values)))]
+    index = min(
+        len(values) - 1,
+        int(deterministic_uniform(ordinal, salt) * len(values)),
+    )
+    return values[index]
 
 
 def deterministic_amount(ordinal: int) -> float:
-    # Heavy-tailed but bounded generated transaction amount. The transform is deterministic,
-    # so any ordinal can be regenerated without storing all prior rows.
+    # Heavy-tailed but bounded generated amount. The mapping is deterministic.
     u = max(1e-12, 1.0 - deterministic_uniform(ordinal, "amount"))
     amount = min(2_500_000.0, 25.0 * (-math.log(u)) ** 3 * 120)
     return round(max(1.0, amount), 2)
 
 
-def transaction_for_ordinal(ordinal: int, epoch: datetime | None = None) -> TreasuryTransaction:
+def transaction_for_ordinal(
+    ordinal: int,
+    epoch: datetime | None = None,
+) -> TreasuryTransaction:
     if ordinal < 0 or ordinal >= UNIVERSE_CARDINALITY:
         raise ValueError(f"ordinal must be in [0, {UNIVERSE_CARDINALITY})")
     epoch = epoch or datetime(2020, 1, 1, tzinfo=timezone.utc)
@@ -75,7 +80,12 @@ def transaction_for_ordinal(ordinal: int, epoch: datetime | None = None) -> Trea
     account_slot = ordinal % 8_000_000
     business_slot = account_slot // 2
     status_roll = deterministic_uniform(ordinal, "status")
-    status = "RETURNED" if status_roll < 0.007 else "PENDING" if status_roll < 0.014 else "POSTED"
+    if status_roll < 0.007:
+        status = "RETURNED"
+    elif status_roll < 0.014:
+        status = "PENDING"
+    else:
+        status = "POSTED"
     return TreasuryTransaction(
         ordinal=ordinal,
         transaction_id=f"ACH-{ordinal:012d}-{_digest(ordinal, 'tx', length=12)}",
@@ -84,14 +94,21 @@ def transaction_for_ordinal(ordinal: int, epoch: datetime | None = None) -> Trea
         business_id=f"BIZ-{business_slot:08d}",
         direction=deterministic_choice(ordinal, ("CREDIT", "DEBIT"), "direction"),
         amount=deterministic_amount(ordinal),
-        sec_code=deterministic_choice(ordinal, ("CCD", "CTX", "PPD", "WEB"), "sec"),
+        sec_code=deterministic_choice(
+            ordinal,
+            ("CCD", "CTX", "PPD", "WEB"),
+            "sec",
+        ),
         transaction_status=status,
         counterparty_token=f"cp-{_digest(ordinal, 'cp', length=18).lower()}",
         source_system="scale_harness",
     )
 
 
-def iter_transactions(start_ordinal: int, row_count: int) -> Iterator[TreasuryTransaction]:
+def iter_transactions(
+    start_ordinal: int,
+    row_count: int,
+) -> Iterator[TreasuryTransaction]:
     stop = min(UNIVERSE_CARDINALITY, start_ordinal + row_count)
     for ordinal in range(start_ordinal, stop):
         yield transaction_for_ordinal(ordinal)
@@ -112,7 +129,14 @@ def build_block_manifest(
         end = min(cardinality, start + block_size)
         row_count = end - start
         representative = transaction_for_ordinal(start, epoch)
-        checksum = _digest(block_id, start, end, representative.transaction_id, cardinality, block_size)
+        checksum = _digest(
+            block_id,
+            start,
+            end,
+            representative.transaction_id,
+            cardinality,
+            block_size,
+        )
         blocks.append(
             TransactionBlock(
                 block_id=block_id,
@@ -128,8 +152,10 @@ def build_block_manifest(
 
 
 def manifest_summary(blocks: Sequence[TransactionBlock]) -> dict:
-    total_rows = sum(b.row_count for b in blocks)
-    root_hash = hashlib.sha256("".join(b.checksum for b in blocks).encode()).hexdigest()
+    total_rows = sum(block.row_count for block in blocks)
+    root_hash = hashlib.sha256(
+        "".join(block.checksum for block in blocks).encode()
+    ).hexdigest()
     return {
         "logical_transaction_cardinality": total_rows,
         "materialized_row_count": 0,
@@ -138,10 +164,13 @@ def manifest_summary(blocks: Sequence[TransactionBlock]) -> dict:
         "maximum_ordinal": blocks[-1].end_ordinal if blocks else None,
         "manifest_merkle_like_root": root_hash,
         "generator_version": "1.0.0",
-        "storage_model": "deterministic ordinal address space; materialize selected shards only",
+        "storage_model": (
+            "deterministic ordinal address space; materialize selected shards only"
+        ),
         "evidence_note": (
-            "The manifest proves an addressable deterministic universe of generated records. "
-            "It does not claim that one trillion physical rows are stored in the development database."
+            "The manifest proves an addressable deterministic universe of generated "
+            "records. It does not claim that one trillion physical rows are stored "
+            "in the development database."
         ),
     }
 
@@ -168,9 +197,13 @@ def write_jsonl(path: Path, rows: Iterable[TreasuryTransaction]) -> int:
 def validate_determinism(samples: int = 1000, seed: int = 7) -> dict:
     rng = random.Random(seed)
     ordinals = [rng.randrange(0, UNIVERSE_CARDINALITY) for _ in range(samples)]
-    first = [transaction_for_ordinal(o) for o in ordinals]
-    second = [transaction_for_ordinal(o) for o in ordinals]
-    mismatches = [o for o, a, b in zip(ordinals, first, second) if a != b]
+    first = [transaction_for_ordinal(ordinal) for ordinal in ordinals]
+    second = [transaction_for_ordinal(ordinal) for ordinal in ordinals]
+    mismatches = [
+        ordinal
+        for ordinal, first_row, second_row in zip(ordinals, first, second)
+        if first_row != second_row
+    ]
     ids = [row.transaction_id for row in first]
     return {
         "samples": samples,
@@ -181,7 +214,10 @@ def validate_determinism(samples: int = 1000, seed: int = 7) -> dict:
     }
 
 
-def estimate_physical_footprint(cardinality: int = UNIVERSE_CARDINALITY, avg_row_bytes: int = 280) -> dict:
+def estimate_physical_footprint(
+    cardinality: int = UNIVERSE_CARDINALITY,
+    avg_row_bytes: int = 280,
+) -> dict:
     raw_bytes = cardinality * avg_row_bytes
     return {
         "logical_rows": cardinality,
@@ -189,11 +225,17 @@ def estimate_physical_footprint(cardinality: int = UNIVERSE_CARDINALITY, avg_row
         "estimated_raw_bytes": raw_bytes,
         "estimated_raw_tb_decimal": round(raw_bytes / 1_000_000_000_000, 2),
         "estimated_raw_tib_binary": round(raw_bytes / (1024**4), 2),
-        "warning": "Physical materialization at this scale is intentionally disabled in free/reference environments.",
+        "warning": (
+            "Physical materialization at this scale is intentionally disabled in "
+            "free/reference environments."
+        ),
     }
 
 
-def export_evidence(root: Path, sample_rows: int = DEFAULT_SAMPLE_ROWS) -> dict:
+def export_evidence(
+    root: Path,
+    sample_rows: int = DEFAULT_SAMPLE_ROWS,
+) -> dict:
     blocks = build_block_manifest()
     manifest_path = root / "transaction_universe_manifest.json"
     sample_path = root / "transaction_sample.jsonl"
@@ -216,18 +258,27 @@ def export_evidence(root: Path, sample_rows: int = DEFAULT_SAMPLE_ROWS) -> dict:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Deterministic generated treasury transaction scale harness")
+    parser = argparse.ArgumentParser(
+        description="Deterministic generated treasury transaction scale harness"
+    )
     parser.add_argument("--output", default="runtime/scale", help="Output directory")
     parser.add_argument("--sample-rows", type=int, default=DEFAULT_SAMPLE_ROWS)
-    parser.add_argument("--ordinal", type=int, help="Print one deterministic transaction and exit")
+    parser.add_argument(
+        "--ordinal",
+        type=int,
+        help="Print one deterministic transaction and exit",
+    )
     args = parser.parse_args()
 
     if args.ordinal is not None:
-        print(json.dumps(dataclasses.asdict(transaction_for_ordinal(args.ordinal)), indent=2))
+        row = transaction_for_ordinal(args.ordinal)
+        print(json.dumps(dataclasses.asdict(row), indent=2))
         return
 
     if args.sample_rows < 0 or args.sample_rows > 5_000_000:
-        raise SystemExit("--sample-rows must be between 0 and 5,000,000 in the reference environment")
+        raise SystemExit(
+            "--sample-rows must be between 0 and 5,000,000 in the reference environment"
+        )
 
     evidence = export_evidence(Path(args.output), args.sample_rows)
     print(json.dumps(evidence, indent=2))
