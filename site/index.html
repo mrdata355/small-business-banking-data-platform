@@ -14,19 +14,30 @@
       <h1>Small Business Banking Data Platform</h1>
       <p class="lede">A production-style data platform covering lending applications, digital business onboarding, identity verification and treasury / ACH activity.</p>
       <div class="hero-actions">
-        <a class="button primary" href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">View repository</a>
+        <a class="button primary" href="/live.html">Open live data console</a>
+        <a class="button" href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">View repository</a>
         <a class="button" href="https://github.dev/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">Open VS Code Web</a>
         <a class="button" href="vscode://vscode.git/clone?url=https://github.com/mrdata355/small-business-banking-data-platform.git">Clone in VS Code</a>
       </div>
       <div class="status-row">
         <a href="https://github.com/mrdata355/small-business-banking-data-platform/actions/workflows/ci.yml" target="_blank" rel="noreferrer"><img src="https://github.com/mrdata355/small-business-banking-data-platform/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
         <span>Generated data only</span>
-        <span>Local-first runtime</span>
+        <span>Persistent live demo backend</span>
+        <span>Local Spark runtime</span>
       </div>
     </div>
   </header>
 
   <main class="shell">
+    <section>
+      <div class="section-heading"><p class="eyebrow">LIVE</p><h2>Generate, clean and merge data now</h2></div>
+      <div class="grid cards-3">
+        <article class="card"><h3>Landing bucket</h3><p>Each generated event is persisted with an S3-style object key so arrival can be inspected independently from downstream state.</p><div class="links"><a href="/live.html">Open live console</a></div></article>
+        <article class="card"><h3>Stream processing</h3><p>Raw arrivals pass through validation and event-id deduplication. Duplicate and invalid deliveries remain observable.</p><div class="links"><a href="/live.html">Create an event</a></div></article>
+        <article class="card"><h3>Canonical merge</h3><p>Valid newer versions update the current application state. The live view shows before/after state and underwriting readiness.</p><div class="links"><a href="/live.html">View canonical state</a></div></article>
+      </div>
+    </section>
+
     <section>
       <div class="section-heading"><p class="eyebrow">PIPELINES</p><h2>End-to-end domains</h2></div>
       <div class="grid cards-4">
@@ -44,11 +55,11 @@
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docs/DATA_FLOW.md" target="_blank" rel="noreferrer"><strong>Data flow</strong><span>Source-to-Gold pipeline diagram</span></a>
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/src/oakbridge" target="_blank" rel="noreferrer"><strong>Python package</strong><span>Version-controlled application code under src/</span></a>
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/tests" target="_blank" rel="noreferrer"><strong>Tests</strong><span>Unit and integration contracts</span></a>
-        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/.github/workflows/ci.yml" target="_blank" rel="noreferrer"><strong>CI/CD</strong><span>Java/Python setup, lint and tests</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/.github/workflows/ci.yml" target="_blank" rel="noreferrer"><strong>CI/CD</strong><span>Lint, tests and complete Spark pipeline execution</span></a>
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/databricks.yml" target="_blank" rel="noreferrer"><strong>Databricks bundle</strong><span>Environment targets and job resources</span></a>
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/infra/terraform" target="_blank" rel="noreferrer"><strong>AWS infrastructure</strong><span>Kinesis, S3, DynamoDB, Glue, Lambda, ECS, EMR Serverless and CloudWatch</span></a>
         <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/orchestration/dags/reconciliation_dag.py" target="_blank" rel="noreferrer"><strong>Airflow</strong><span>Finite reconciliation orchestration</span></a>
-        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/sql" target="_blank" rel="noreferrer"><strong>SQL</strong><span>Delta DDL and reconciliation queries</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/sql" target="_blank" rel="noreferrer"><strong>SQL</strong><span>DDL, reconciliation and live backend schema</span></a>
       </div>
     </section>
 
@@ -63,7 +74,7 @@
 
     <section>
       <div class="section-heading"><p class="eyebrow">STACK</p><h2>Platform components</h2></div>
-      <div class="stack-list"><span>Python</span><span>PySpark</span><span>Spark Structured Streaming</span><span>SQL</span><span>Parquet</span><span>Delta patterns</span><span>Databricks</span><span>Airflow</span><span>Docker</span><span>GitHub Actions</span><span>Terraform</span><span>AWS Kinesis</span><span>AWS S3</span><span>DynamoDB</span><span>AWS Glue</span><span>AWS Lambda</span><span>Amazon ECS</span><span>EMR Serverless</span><span>CloudWatch</span></div>
+      <div class="stack-list"><span>Python</span><span>PySpark</span><span>Spark Structured Streaming</span><span>SQL</span><span>Parquet</span><span>Postgres</span><span>Neon Data API</span><span>Databricks</span><span>Airflow</span><span>Docker</span><span>GitHub Actions</span><span>Terraform</span><span>AWS Kinesis</span><span>AWS S3</span><span>DynamoDB</span><span>AWS Glue</span><span>AWS Lambda</span><span>Amazon ECS</span><span>EMR Serverless</span><span>CloudWatch</span></div>
     </section>
   </main>
 
