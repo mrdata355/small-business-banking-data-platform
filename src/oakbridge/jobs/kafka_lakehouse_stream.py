@@ -19,9 +19,11 @@ ACH_TOPIC = "treasury.ach-events.v1"
 APP_BRONZE = "s3a://oakbridge-bronze/lending/application_event"
 APP_HISTORY = "s3a://oakbridge-silver/lending/loan_application_status_history"
 APP_CURRENT = "s3a://oakbridge-silver/lending/loan_application"
+APP_GOLD_READINESS = "s3a://oakbridge-gold/lending/underwriting_readiness_queue"
 APP_QUARANTINE = "s3a://oakbridge-quarantine/lending/application_event"
 ACH_BRONZE = "s3a://oakbridge-bronze/treasury/ach_event"
 ACH_SILVER = "s3a://oakbridge-silver/treasury/ach_transaction"
+ACH_GOLD_DAILY = "s3a://oakbridge-gold/treasury/activity_daily"
 CHECKPOINT_ROOT = "s3a://oakbridge-checkpoints"
 
 APPLICATION_SCHEMA = T.StructType([
@@ -114,6 +116,28 @@ def application_dq(df):
     )
 
 
+def with_readiness(df):
+    return df.withColumn(
+        "ready_for_underwriting",
+        F.col("documents_complete")
+        & F.col("financial_package_complete")
+        & (F.col("identity_verification_status") == F.lit("VERIFIED")),
+    )
+
+
+def refresh_application_gold(spark: SparkSession) -> None:
+    if not DeltaTable.isDeltaTable(spark, APP_CURRENT):
+        return
+    current = spark.read.format("delta").load(APP_CURRENT)
+    (
+        current.filter(F.col("ready_for_underwriting"))
+        .write.format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .save(APP_GOLD_READINESS)
+    )
+
+
 def upsert_application_current(batch_df, batch_id: int) -> None:
     if batch_df.isEmpty():
         return
@@ -132,6 +156,7 @@ def upsert_application_current(batch_df, batch_id: int) -> None:
         )
     else:
         latest.write.format("delta").mode("overwrite").save(APP_CURRENT)
+    refresh_application_gold(batch_df.sparkSession)
 
 
 def process_application_batch(batch_df, batch_id: int) -> None:
@@ -142,11 +167,23 @@ def process_application_batch(batch_df, batch_id: int) -> None:
     invalid = checked.filter(F.col("dq_reason").isNotNull())
     if not invalid.isEmpty():
         invalid.write.format("delta").mode("append").save(APP_QUARANTINE)
-    valid = checked.filter(F.col("dq_reason").isNull()).drop("dq_reason")
+    valid = with_readiness(checked.filter(F.col("dq_reason").isNull()).drop("dq_reason"))
     if not valid.isEmpty():
         valid.write.format("delta").mode("append").save(APP_HISTORY)
         upsert_application_current(valid, batch_id)
     checked.unpersist()
+
+
+def refresh_ach_gold(spark: SparkSession) -> None:
+    if not DeltaTable.isDeltaTable(spark, ACH_SILVER):
+        return
+    silver = spark.read.format("delta").load(ACH_SILVER)
+    daily = (
+        silver.withColumn("activity_date", F.to_date("event_ts"))
+        .groupBy("activity_date", "business_id", "direction", "transaction_status")
+        .agg(F.count("*").alias("transaction_count"), F.sum("amount").alias("total_amount"))
+    )
+    daily.write.format("delta").mode("overwrite").option("overwriteSchema", "true").save(ACH_GOLD_DAILY)
 
 
 def process_ach_batch(batch_df, batch_id: int) -> None:
@@ -160,6 +197,7 @@ def process_ach_batch(batch_df, batch_id: int) -> None:
     )
     if not valid.isEmpty():
         valid.write.format("delta").mode("append").save(ACH_SILVER)
+        refresh_ach_gold(batch_df.sparkSession)
 
 
 def main() -> None:
@@ -180,14 +218,14 @@ def main() -> None:
     application_query = (
         applications.writeStream.queryName("lending_application_stream")
         .foreachBatch(process_application_batch)
-        .option("checkpointLocation", f"{CHECKPOINT_ROOT}/lending/application_stream")
+        .option("checkpointLocation", f"{CHECKPOINT_ROOT}/lending/application_stream/v1")
         .trigger(processingTime="5 seconds")
         .start()
     )
     ach_query = (
         ach.writeStream.queryName("treasury_ach_stream")
         .foreachBatch(process_ach_batch)
-        .option("checkpointLocation", f"{CHECKPOINT_ROOT}/treasury/ach_stream")
+        .option("checkpointLocation", f"{CHECKPOINT_ROOT}/treasury/ach_stream/v1")
         .trigger(processingTime="5 seconds")
         .start()
     )
