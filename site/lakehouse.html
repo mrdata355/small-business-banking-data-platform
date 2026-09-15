@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Streaming Lakehouse</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .lh-shell{width:min(1250px,calc(100% - 28px));margin:auto}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0}.nav a{color:var(--accent2);text-decoration:none;border:1px solid var(--line);padding:8px 11px;border-radius:9px}.tools,.grids{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-top:14px}.tool,.panel{border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:15px}.tool strong{display:block;font-size:17px;margin-bottom:5px}.tool span,.panel p{font-size:12px;color:var(--muted)}.tool a{display:inline-block;margin-top:10px;color:var(--accent2);font-weight:800}.panel h3{margin:0 0 8px}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;word-break:break-word;color:#dce7f5}.flow{border:1px solid var(--line);background:#0a1625;border-radius:14px;padding:16px;margin-top:16px;overflow:auto}.flow pre{margin:0;color:#dce7f5;line-height:1.7}.table-card{margin-top:14px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}.table-wrap{overflow:auto;max-height:430px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #223248;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#122034}.state{display:flex;gap:9px;flex-wrap:wrap;margin:16px 0}.state span{border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px}.online{color:#67dfa2}@media(max-width:1000px){.tools,.grids{grid-template-columns:repeat(2,1fr)}}@media(max-width:600px){.tools,.grids{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main class="lh-shell">
+  <nav class="nav"><a href="/">Platform</a><a href="/live.html">Live data</a><a href="/observability.html">Observability</a><a href="/automations.html">Automations</a><a href="/mlops.html">MLOps</a><a href="/semantic.html">Semantic / BI</a></nav>
+  <p class="eyebrow">STREAMING LAKEHOUSE</p>
+  <h1 style="font-size:clamp(34px,6vw,60px);margin:0">Kafka → Spark → Delta → Gold</h1>
+  <p class="lede">The repository includes an executable local production-equivalent stack and cloud deployment definitions. Local services use Kafka-compatible Redpanda and S3-compatible MinIO so the full data path can run without continuously provisioning paid cloud resources.</p>
+
+  <div class="state"><span class="online">Public live backend: persistent</span><span>Local stack: start with docker-compose.full.yml</span><span>AWS / Databricks: opt-in deployment targets</span></div>
+
+  <section class="tools">
+    <article class="tool"><strong>Redpanda Console</strong><span>Topics, partitions, offsets, records and schema-registry visibility.</span><a href="http://localhost:8080" target="_blank">Open local console</a></article>
+    <article class="tool"><strong>MinIO Console</strong><span>S3-compatible landing, Bronze, Silver, Gold, quarantine, checkpoint and ML artefact buckets.</span><a href="http://localhost:9001" target="_blank">Open local data lake</a></article>
+    <article class="tool"><strong>Spark UI</strong><span>Streaming jobs, stages, tasks, shuffle and executor evidence.</span><a href="http://localhost:4040" target="_blank">Open local Spark UI</a></article>
+    <article class="tool"><strong>Grafana</strong><span>Provisioned streaming dashboards over Prometheus metrics.</span><a href="http://localhost:3000" target="_blank">Open local Grafana</a></article>
+    <article class="tool"><strong>Prometheus</strong><span>Gateway, Spark stream and model-serving metrics.</span><a href="http://localhost:9090" target="_blank">Open local Prometheus</a></article>
+    <article class="tool"><strong>MLflow</strong><span>Experiments, metrics, registered models and champion aliases.</span><a href="http://localhost:5000" target="_blank">Open local MLflow</a></article>
+    <article class="tool"><strong>Stream Gateway</strong><span>FastAPI producer that validates contracts, writes MinIO landing objects and publishes Kafka records.</span><a href="http://localhost:8000/docs" target="_blank">Open local API</a></article>
+    <article class="tool"><strong>Model API</strong><span>Serves the current MLflow champion models.</span><a href="http://localhost:8010/docs" target="_blank">Open local model API</a></article>
+  </section>
+
+  <div class="flow"><pre>application producer / ACH producer
+        │
+        ├── JSON Schema validation ──► quarantine on invalid contract
+        │
+        ├── MinIO landing object (S3 API)
+        │
+        └── Redpanda Kafka topic
+                  │
+                  ▼
+          Spark Structured Streaming
+          watermark + event-id dedupe
+                  │
+          ┌───────┴────────┐
+          ▼                ▼
+      Bronze Delta     DQ quarantine
+          │
+          ▼
+      Silver history + version-aware current-state MERGE
+          │
+          ├──► Gold underwriting readiness
+          └──► Gold treasury daily activity
+
+checkpoints → oakbridge-checkpoints
+metrics → Prometheus → Grafana
+models → MLflow → champion registry → Model API</pre></div>
+
+  <section class="grids">
+    <article class="panel"><h3>Kafka topics</h3><p class="mono">lending.application-events.v1<br/>banking.business-onboarding.v1<br/>risk.identity-verification.v1<br/>treasury.ach-events.v1<br/>customer.interactions.v1<br/>ops.pipeline-events.v1</p></article>
+    <article class="panel"><h3>Data-lake buckets</h3><p class="mono">oakbridge-landing<br/>oakbridge-bronze<br/>oakbridge-silver<br/>oakbridge-gold<br/>oakbridge-quarantine<br/>oakbridge-checkpoints<br/>oakbridge-ml-artifacts</p></article>
+    <article class="panel"><h3>Contracts</h3><p class="mono">lending.application-events.v1-value<br/>treasury.ach-events.v1-value</p><p><a href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/contracts" target="_blank">Open contract schemas</a></p></article>
+    <article class="panel"><h3>Full stack</h3><p>The complete local topology is version controlled in Docker Compose.</p><p><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docker-compose.full.yml" target="_blank">Open compose file</a></p></article>
+  </section>
+
+  <section class="table-card"><h3>Medallion and operational paths</h3><div class="table-wrap"><table><thead><tr><th>Layer</th><th>Entity</th><th>Local S3-compatible path</th><th>Catalog contract</th></tr></thead><tbody>
+    <tr><td>Landing</td><td>Lending application event</td><td class="mono">s3a://oakbridge-landing/lending/application-events/event_date=YYYY-MM-DD/</td><td>object landing</td></tr>
+    <tr><td>Bronze</td><td>Loan application event</td><td class="mono">s3a://oakbridge-bronze/lending/application_event/</td><td class="mono">oakbridge_prod.bronze_lending.loan_application_event_raw</td></tr>
+    <tr><td>Silver</td><td>Application history</td><td class="mono">s3a://oakbridge-silver/lending/loan_application_status_history/</td><td class="mono">oakbridge_prod.silver_lending.loan_application_status_history</td></tr>
+    <tr><td>Silver</td><td>Application current</td><td class="mono">s3a://oakbridge-silver/lending/loan_application/</td><td class="mono">oakbridge_prod.silver_lending.loan_application</td></tr>
+    <tr><td>Gold</td><td>Underwriting readiness</td><td class="mono">s3a://oakbridge-gold/lending/underwriting_readiness_queue/</td><td class="mono">oakbridge_prod.gold_lending.underwriting_readiness_queue</td></tr>
+    <tr><td>Quarantine</td><td>Lending DQ</td><td class="mono">s3a://oakbridge-quarantine/lending/application_event/</td><td class="mono">oakbridge_prod.ops.data_quality_result</td></tr>
+    <tr><td>Bronze</td><td>ACH</td><td class="mono">s3a://oakbridge-bronze/treasury/ach_event/</td><td class="mono">oakbridge_prod.bronze_treasury.ach_event_raw</td></tr>
+    <tr><td>Silver</td><td>ACH</td><td class="mono">s3a://oakbridge-silver/treasury/ach_transaction/</td><td class="mono">oakbridge_prod.silver_treasury.ach_transaction</td></tr>
+    <tr><td>Gold</td><td>Treasury daily</td><td class="mono">s3a://oakbridge-gold/treasury/activity_daily/</td><td class="mono">oakbridge_prod.gold_treasury.activity_daily</td></tr>
+    <tr><td>State</td><td>Lending checkpoint</td><td class="mono">s3a://oakbridge-checkpoints/lending/application_stream/v1/</td><td>stream progress/state</td></tr>
+    <tr><td>State</td><td>ACH checkpoint</td><td class="mono">s3a://oakbridge-checkpoints/treasury/ach_stream/v1/</td><td>stream progress/state</td></tr>
+  </tbody></table></div></section>
+
+  <section class="tools">
+    <article class="tool"><strong>Databricks</strong><span>Asset Bundles, jobs and source notebooks are committed. Workspace deep links require your workspace hostname.</span><a href="https://accounts.cloud.databricks.com/" target="_blank">Open Databricks</a> · <a href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/notebooks/databricks" target="_blank">Notebooks</a></article>
+    <article class="tool"><strong>VS Code</strong><span>The complete repository opens in GitHub's browser VS Code or desktop clone flow.</span><a href="https://github.dev/mrdata355/small-business-banking-data-platform" target="_blank">Open VS Code Web</a> · <a href="vscode://vscode.git/clone?url=https://github.com/mrdata355/small-business-banking-data-platform.git">Clone in VS Code</a></article>
+    <article class="tool"><strong>AWS</strong><span>Terraform defines AWS targets; provisioning is not automatic because it can incur charges.</span><a href="https://console.aws.amazon.com/console/home?region=us-east-1" target="_blank">Open AWS Console</a> · <a href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/infra/terraform" target="_blank">Terraform</a></article>
+    <article class="tool"><strong>Power BI</strong><span>The live PostgreSQL semantic views are already deployed; credentials remain outside Git.</span><a href="https://app.powerbi.com/" target="_blank">Open Power BI</a> · <a href="/semantic.html">Semantic layer</a></article>
+  </section>
+</main>
+</body>
+</html>
