@@ -1,0 +1,30 @@
+resources:
+  schemas:
+    bronze_lending:
+      name: bronze_lending
+      catalog_name: ${var.catalog}
+      comment: Raw lending application events and replay boundary.
+    silver_lending:
+      name: silver_lending
+      catalog_name: ${var.catalog}
+      comment: Canonical lending application state and history.
+    bronze_treasury:
+      name: bronze_treasury
+      catalog_name: ${var.catalog}
+      comment: Raw ACH and treasury events.
+    silver_treasury:
+      name: silver_treasury
+      catalog_name: ${var.catalog}
+      comment: Canonical treasury transactions.
+    gold_lending:
+      name: gold_lending
+      catalog_name: ${var.catalog}
+      comment: Lending serving layer and underwriting readiness.
+    gold_treasury:
+      name: gold_treasury
+      catalog_name: ${var.catalog}
+      comment: Treasury serving layer and daily activity.
+    ops:
+      name: ops
+      catalog_name: ${var.catalog}
+      comment: Data quality, pipeline health, and reconciliation outputs.
