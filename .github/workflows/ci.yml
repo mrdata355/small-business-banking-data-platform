@@ -27,3 +27,9 @@ jobs:
         run: python scripts/run_all.py
       - name: Render pipeline evidence
         run: python scripts/show_results.py
+      - name: Publish pipeline evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: pipeline-evidence
+          path: runtime/lake/
+          retention-days: 30

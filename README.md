@@ -11,13 +11,16 @@ A local-first data engineering platform for connected small-business banking dom
 
 The repository contains generated data only. Resource names, environment paths and datasets are project-owned examples.
 
-## Evidence explorer
+## Live platform explorer
 
-The deployable static site under `site/` links directly to the code, schemas, tests, infrastructure, Databricks bundle, notebook source and VS Code workspace.
+**Production showcase:** https://small-business-banking-data-platfor.vercel.app
+
+The explorer links directly to pipeline code, schemas, tests, infrastructure, Databricks configuration, notebook source, CI evidence and the configured VS Code workspace.
 
 - [Repository](https://github.com/mrdata355/small-business-banking-data-platform)
 - [VS Code Web](https://github.dev/mrdata355/small-business-banking-data-platform)
 - [CI runs](https://github.com/mrdata355/small-business-banking-data-platform/actions/workflows/ci.yml)
+- [Verified end-to-end run](docs/VERIFICATION.md)
 - [Architecture](docs/ARCHITECTURE.md)
 - [Data flow](docs/DATA_FLOW.md)
 - [Stack map](docs/STACK.md)
@@ -69,7 +72,7 @@ Core application code lives under `src/oakbridge/`. The Databricks notebook sour
 
 ## Databricks
 
-The Asset Bundle builds a Python wheel and defines:
+The bundle builds a Python wheel and defines:
 
 - continuous lending application stream,
 - continuous treasury / ACH stream,
