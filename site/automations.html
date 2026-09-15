@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Platform Automations</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .auto-shell{width:min(1180px,calc(100% - 28px));margin:auto}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0}.nav a{color:var(--accent2);text-decoration:none;border:1px solid var(--line);padding:8px 11px;border-radius:9px}.control-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:18px}.control{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px}.control h3{margin:0 0 7px}.control p{font-size:13px;color:var(--muted);min-height:58px}.control button{width:100%;min-height:42px;border:1px solid var(--line);border-radius:9px;background:#0c1b2e;color:var(--text);font-weight:800;cursor:pointer}.control button.primary{background:var(--accent);color:#07101d}.control button.stop{border-color:#8a3e48;color:#ffc7ce}.control button:disabled{opacity:.5}.status{margin-top:18px;border:1px solid var(--line);background:#0b1625;border-radius:12px;padding:14px}.status pre{white-space:pre-wrap;word-break:break-word;font-size:12px;color:#cfe0f2}.live-state{display:flex;align-items:center;gap:8px;font-weight:800}.dot{width:10px;height:10px;border-radius:50%;background:#64748b}.dot.on{background:#45c486;box-shadow:0 0 0 5px rgba(69,196,134,.1)}.table-card{margin-top:16px;border:1px solid var(--line);background:var(--panel);border-radius:14px;padding:14px}.table-wrap{overflow:auto;max-height:420px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #223248;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#122034}.ok{color:#67dfa2}.bad{color:#ff919c}.warn{color:#ffd37d}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}@media(max-width:850px){.control-grid{grid-template-columns:1fr 1fr}}@media(max-width:560px){.control-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main class="auto-shell">
+  <nav class="nav"><a href="/">Platform</a><a href="/live.html">Live data</a><a href="/observability.html">Observability</a><a href="/mlops.html">MLOps</a><a href="/semantic.html">Semantic / BI</a></nav>
+  <p class="eyebrow">AUTOMATION CONTROL PLANE</p>
+  <h1 style="font-size:clamp(34px,6vw,60px);margin:0">Pipeline Automations</h1>
+  <p class="lede">Run persistent generated ingestion, treasury, scoring, sentiment, replay and sentinel workflows. Every automation records a time-stamped run.</p>
+
+  <div class="control-grid">
+    <article class="control"><h3>Landing batch · 5</h3><p>Create five new applications and process them through landing, validation and canonical merge.</p><button data-job="batch5">Run batch</button></article>
+    <article class="control"><h3>Landing batch · 25</h3><p>Generate a larger burst for throughput and dashboard testing.</p><button data-job="batch25">Run batch</button></article>
+    <article class="control"><h3>Treasury burst</h3><p>Generate 20 ACH transactions with anomaly scores and risk flags.</p><button data-job="treasury">Generate ACH</button></article>
+    <article class="control"><h3>Model scoring sweep</h3><p>Score the latest canonical applications and persist model/version/features/results.</p><button data-job="models">Score applications</button></article>
+    <article class="control"><h3>Sentiment stream</h3><p>Create 10 customer interaction events across web, phone, email and chat.</p><button data-job="sentiment">Generate interactions</button></article>
+    <article class="control"><h3>Ingestion Sentinel</h3><p>Evaluate one-hour arrivals, quarantine rate, duplicates and component health.</p><button data-job="sentinel">Run sentinel</button></article>
+    <article class="control"><h3>Duplicate delivery</h3><p>Replay the last event for a canonical application and confirm idempotent handling.</p><button data-job="duplicate">Replay duplicate</button></article>
+    <article class="control"><h3>Quarantine validation</h3><p>Send a deliberately invalid event and verify it cannot overwrite current state.</p><button data-job="invalid">Inject invalid event</button></article>
+    <article class="control"><h3>Continuous live generator</h3><p>While this page stays open, generate persistent lending, treasury and interaction events every three seconds.</p><button id="streamStart" class="primary">Start stream</button><button id="streamStop" class="stop" style="margin-top:8px" disabled>Stop stream</button></article>
+  </div>
+
+  <div class="status"><div class="live-state"><span id="streamDot" class="dot"></span><span id="streamLabel">Continuous generator stopped</span></div><pre id="jobOutput">Choose an automation.</pre></div>
+
+  <section class="table-card"><h3>Automation run history</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Automation</th><th>Status</th><th>Records</th><th>Detail</th></tr></thead><tbody id="runBody"></tbody></table></div></section>
+  <section class="table-card"><h3>Latest pipeline outcomes</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Application</th><th>Event</th><th>Outcome</th></tr></thead><tbody id="auditBody"></tbody></table></div></section>
+</main>
+<script src="/automations.js"></script>
+</body>
+</html>
