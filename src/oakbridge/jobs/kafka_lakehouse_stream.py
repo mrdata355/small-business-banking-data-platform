@@ -9,6 +9,7 @@ from pyspark.sql import SparkSession, Window, functions as F, types as T
 from oakbridge.observability.spark_streaming_metrics import install_streaming_metrics
 
 KAFKA_BOOTSTRAP = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "redpanda:9092")
+KAFKA_STARTING_OFFSETS = os.getenv("KAFKA_STARTING_OFFSETS", "latest")
 S3_ENDPOINT = os.getenv("S3_ENDPOINT", "http://minio:9000")
 ACCESS_KEY = os.getenv("AWS_ACCESS_KEY_ID", "minioadmin")
 SECRET_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "minioadmin123")
@@ -87,7 +88,7 @@ def kafka_json_stream(spark: SparkSession, topic: str, schema: T.StructType):
         spark.readStream.format("kafka")
         .option("kafka.bootstrap.servers", KAFKA_BOOTSTRAP)
         .option("subscribe", topic)
-        .option("startingOffsets", "latest")
+        .option("startingOffsets", KAFKA_STARTING_OFFSETS)
         .option("failOnDataLoss", "false")
         .load()
     )
