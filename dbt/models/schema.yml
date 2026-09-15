@@ -1,0 +1,39 @@
+version: 2
+
+sources:
+  - name: analytics_core
+    schema: analytics_core
+    tables:
+      - name: fact_loan_application
+        columns:
+          - name: application_id
+            tests: [not_null, unique]
+          - name: event_version
+            tests: [not_null]
+      - name: fact_pipeline_run
+        columns:
+          - name: run_id
+            tests: [not_null, unique]
+      - name: fact_data_quality_result
+        columns:
+          - name: dq_result_id
+            tests: [not_null, unique]
+      - name: fact_model_prediction
+        columns:
+          - name: prediction_id
+            tests: [not_null, unique]
+      - name: fact_work_item
+        columns:
+          - name: work_key
+            tests: [not_null, unique]
+
+models:
+  - name: sem_enterprise_kpis
+    description: Cross-domain governed KPI surface for operational and management reporting.
+    columns:
+      - name: domain
+        tests: [not_null]
+      - name: metric_code
+        tests: [not_null]
+      - name: metric_value
+        tests: [not_null]
