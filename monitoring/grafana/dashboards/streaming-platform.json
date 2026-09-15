@@ -1,0 +1,60 @@
+{
+  "annotations": {"list": []},
+  "editable": true,
+  "graphTooltip": 1,
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Gateway accepted events / sec",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "targets": [{"expr": "sum(rate(gateway_events_accepted_total[1m])) by (topic)", "legendFormat": "{{topic}}"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "Spark input vs processed rows / sec",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "targets": [
+        {"expr": "spark_stream_input_rows_per_second", "legendFormat": "input {{query}}"},
+        {"expr": "spark_stream_processed_rows_per_second", "legendFormat": "processed {{query}}"}
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Streaming trigger duration (ms)",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 8},
+      "targets": [{"expr": "spark_stream_batch_duration_ms", "legendFormat": "{{query}}"}]
+    },
+    {
+      "type": "timeseries",
+      "title": "State rows",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 8},
+      "targets": [{"expr": "spark_stream_state_rows_total", "legendFormat": "{{query}}"}]
+    },
+    {
+      "type": "stat",
+      "title": "Rejected events",
+      "gridPos": {"h": 5, "w": 8, "x": 0, "y": 16},
+      "targets": [{"expr": "sum(gateway_events_rejected_total)"}]
+    },
+    {
+      "type": "stat",
+      "title": "Application events accepted",
+      "gridPos": {"h": 5, "w": 8, "x": 8, "y": 16},
+      "targets": [{"expr": "sum(gateway_events_accepted_total{topic=\"lending.application-events.v1\"})"}]
+    },
+    {
+      "type": "stat",
+      "title": "ACH events accepted",
+      "gridPos": {"h": 5, "w": 8, "x": 16, "y": 16},
+      "targets": [{"expr": "sum(gateway_events_accepted_total{topic=\"treasury.ach-events.v1\"})"}]
+    }
+  ],
+  "schemaVersion": 39,
+  "tags": ["streaming", "spark", "banking"],
+  "templating": {"list": []},
+  "time": {"from": "now-30m", "to": "now"},
+  "timezone": "browser",
+  "title": "Banking Streaming Platform",
+  "uid": "banking-streaming-platform",
+  "version": 1
+}
