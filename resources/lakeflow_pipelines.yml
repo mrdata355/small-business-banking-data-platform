@@ -1,0 +1,97 @@
+resources:
+  pipelines:
+    lending_bronze:
+      name: oakbridge-lending-bronze-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.bronze_lending.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/lending_bronze.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+        oakbridge.demo.lending_rps: "5"
+        pipelines.metrics.flowTimeReporter.enabled: "true"
+
+    lending_silver:
+      name: oakbridge-lending-silver-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.silver_lending.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/lending_silver.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+        pipelines.metrics.flowTimeReporter.enabled: "true"
+
+    treasury_bronze:
+      name: oakbridge-treasury-bronze-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.bronze_treasury.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/treasury_bronze.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+        pipelines.metrics.flowTimeReporter.enabled: "true"
+
+    treasury_silver:
+      name: oakbridge-treasury-silver-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.silver_treasury.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/treasury_silver.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+        pipelines.metrics.flowTimeReporter.enabled: "true"
+
+    lending_gold:
+      name: oakbridge-lending-gold-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.gold_lending.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/gold_lending.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+
+    treasury_gold:
+      name: oakbridge-treasury-gold-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.gold_treasury.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/gold_treasury.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
+
+    platform_ops:
+      name: oakbridge-platform-ops-${bundle.target}
+      catalog: ${var.catalog}
+      schema: ${resources.schemas.ops.name}
+      serverless: true
+      development: true
+      continuous: false
+      libraries:
+        - file:
+            path: ../src/oakbridge/lakeflow/ops_quality.py
+      configuration:
+        oakbridge.catalog: ${var.catalog}
