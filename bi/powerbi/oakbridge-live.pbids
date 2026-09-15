@@ -1,0 +1,20 @@
+{
+  "version": "0.1",
+  "connections": [
+    {
+      "details": {
+        "protocol": "postgresql",
+        "address": {
+          "server": "ep-summer-recipe-argodi6k-pooler.c-4.us-west-2.aws.neon.tech",
+          "database": "banking_demo"
+        },
+        "authentication": null,
+        "query": null
+      },
+      "options": {
+        "sslmode": "require"
+      },
+      "mode": "DirectQuery"
+    }
+  ]
+}
