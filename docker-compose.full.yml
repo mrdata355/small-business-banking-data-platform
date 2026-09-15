@@ -1,0 +1,167 @@
+services:
+  redpanda:
+    image: redpandadata/redpanda:v24.2.18
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=1
+      - --memory=1G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092,OUTSIDE://0.0.0.0:19092
+      - --advertise-kafka-addr=PLAINTEXT://redpanda:9092,OUTSIDE://localhost:19092
+      - --pandaproxy-addr=0.0.0.0:8082
+      - --schema-registry-addr=0.0.0.0:8081
+    ports:
+      - "19092:19092"
+      - "18081:8081"
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health --brokers redpanda:9092 | grep -q Healthy"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+
+  redpanda-console:
+    image: redpandadata/console:v2.7.2
+    environment:
+      KAFKA_BROKERS: redpanda:9092
+      KAFKA_SCHEMAREGISTRY_ENABLED: "true"
+      KAFKA_SCHEMAREGISTRY_URLS: http://redpanda:8081
+    ports:
+      - "8080:8080"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  minio:
+    image: minio/minio:RELEASE.2025-02-07T23-21-09Z
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
+      interval: 5s
+      timeout: 4s
+      retries: 20
+
+  minio-init:
+    image: minio/mc:RELEASE.2025-02-08T19-14-21Z
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    volumes:
+      - ./infra/local/minio-init.sh:/bootstrap/minio-init.sh:ro
+    entrypoint: ["/bin/sh", "/bootstrap/minio-init.sh"]
+    depends_on:
+      minio:
+        condition: service_healthy
+
+  topic-init:
+    image: redpandadata/redpanda:v24.2.18
+    volumes:
+      - ./infra/local/redpanda-init.sh:/bootstrap/redpanda-init.sh:ro
+    entrypoint: ["/bin/bash", "/bootstrap/redpanda-init.sh"]
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  schema-registry-init:
+    image: python:3.11-alpine
+    working_dir: /workspace
+    volumes:
+      - ./contracts:/workspace/contracts:ro
+      - ./infra/local/register-schemas.py:/workspace/register-schemas.py:ro
+    command: sh -c "pip install --no-cache-dir requests && python register-schemas.py"
+    depends_on:
+      redpanda:
+        condition: service_healthy
+
+  stream-gateway:
+    build:
+      context: .
+      dockerfile: docker/full-stack/Dockerfile.gateway
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      MINIO_LANDING_BUCKET: oakbridge-landing
+    ports:
+      - "8000:8000"
+    depends_on:
+      topic-init:
+        condition: service_completed_successfully
+      minio-init:
+        condition: service_completed_successfully
+
+  spark-streaming:
+    build:
+      context: .
+      dockerfile: docker/full-stack/Dockerfile.spark
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: redpanda:9092
+      S3_ENDPOINT: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+      AWS_REGION: us-east-1
+    ports:
+      - "4040:4040"
+      - "9108:9108"
+    depends_on:
+      stream-gateway:
+        condition: service_started
+      minio-init:
+        condition: service_completed_successfully
+
+  mlflow:
+    build:
+      context: .
+      dockerfile: docker/full-stack/Dockerfile.mlflow
+    environment:
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlflow/mlflow.db --artifacts-destination s3://oakbridge-ml-artifacts
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    depends_on:
+      minio-init:
+        condition: service_completed_successfully
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    ports:
+      - "9090:9090"
+    depends_on:
+      - stream-gateway
+      - spark-streaming
+
+  grafana:
+    image: grafana/grafana:11.3.0
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  minio-data:
+  mlflow-data:
