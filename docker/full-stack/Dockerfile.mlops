@@ -1,7 +1,7 @@
 FROM python:3.11-slim
 WORKDIR /app
-COPY requirements-full.txt ./
-RUN pip install --no-cache-dir -r requirements-full.txt
+COPY requirements-mlops.txt ./
+RUN pip install --no-cache-dir -r requirements-mlops.txt
 COPY mlops ./mlops
 COPY services ./services
 ENV PYTHONPATH=/app
