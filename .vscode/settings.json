@@ -1,9 +1,25 @@
 {
   "python.testing.pytestEnabled": true,
-  "python.testing.pytestArgs": [
-    "tests"
-  ],
-  "python.analysis.extraPaths": [
-    "src"
-  ]
+  "python.testing.pytestArgs": ["tests", "-q"],
+  "python.testing.unittestEnabled": false,
+  "python.analysis.extraPaths": ["src", "."],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.analysis.autoImportCompletions": true,
+  "python.terminal.activateEnvironment": true,
+  "editor.formatOnSave": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/.pytest_cache": true,
+    "**/.ruff_cache": true
+  },
+  "files.associations": {
+    "*.tf": "terraform",
+    "*.sql": "sql",
+    "databricks.yml": "yaml",
+    "docker-compose.full.yml": "yaml"
+  },
+  "workbench.startupEditor": "none",
+  "workbench.editor.enablePreview": false,
+  "explorer.compactFolders": false,
+  "git.autofetch": true
 }
