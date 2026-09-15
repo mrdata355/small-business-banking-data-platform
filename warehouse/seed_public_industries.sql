@@ -1,0 +1,37 @@
+-- Public-facing industry categories mapped to project-owned analytical groupings.
+-- Source context: https://www.liveoak.bank/business-loans/
+INSERT INTO analytics_core.dim_industry(naics_code, industry_name, industry_group, public_specialty_segment, credit_cycle_band, seasonality_band) VALUES
+('541211','Accounting and Tax Services','Professional Services','Accounting and Tax','MODERATE','LOW'),
+('111000','Agriculture','Agriculture','Agriculture','ELEVATED','HIGH'),
+('811111','Automotive Care','Consumer Services','Automotive Care','MODERATE','MEDIUM'),
+('621420','Behavioral Health Care','Healthcare','Behavioral Health Care','MODERATE','LOW'),
+('517000','Broadband Businesses','Technology and Communications','Broadband Businesses','MODERATE','LOW'),
+('811192','Car Wash','Consumer Services','Car Wash','MODERATE','MEDIUM'),
+('621210','Dental Practices','Healthcare','Dental','LOW','LOW'),
+('611000','Education Services','Education','Education Services','MODERATE','MEDIUM'),
+('722511','Franchise Restaurants','Hospitality','Franchise Restaurants','ELEVATED','MEDIUM'),
+('812210','Funeral Home and Cemetery','Essential Services','Funeral Home and Cemetery','LOW','LOW'),
+('561210','Government Contracting','Professional Services','Government Contracting','MODERATE','LOW'),
+('444140','Hardware Store','Retail','Hardware Store','MODERATE','MEDIUM'),
+('621000','Healthcare','Healthcare','Healthcare','LOW','LOW'),
+('624120','Home Care','Healthcare','Home Care','MODERATE','LOW'),
+('238220','HVAC Plumbing Electrical','Trades','HVAC, Plumbing and Electrical Contractors','MODERATE','HIGH'),
+('524210','Insurance Agencies','Financial Services','Insurance','LOW','LOW'),
+('523940','Investment Advisory','Financial Services','Investment Advisory','LOW','LOW'),
+('541110','Law Firms','Professional Services','Law Firms','LOW','LOW'),
+('541512','Managed Service Providers','Technology and Communications','Managed Service Providers','MODERATE','LOW'),
+('812910','Pet Care Facilities','Consumer Services','Pet Care Facilities','MODERATE','MEDIUM'),
+('446110','Pharmacy','Healthcare','Pharmacy','MODERATE','LOW'),
+('531311','Property Management','Real Estate Services','Property Management','MODERATE','LOW'),
+('623312','Residential Assisted Living','Healthcare','Residential Assisted Living','MODERATE','LOW'),
+('561790','Restoration Remediation Cleaning','Commercial Services','Restoration, Remediation and Cleaning','MODERATE','HIGH'),
+('721211','RV Parks','Hospitality','RV Parks','ELEVATED','HIGH'),
+('531130','Self Storage','Real Estate Services','Self-Storage','LOW','LOW'),
+('623110','Senior Care','Healthcare','Senior Care','MODERATE','LOW'),
+('513000','Technology Media Telecommunications','Technology and Communications','Technology, Media and Telecommunications','ELEVATED','LOW'),
+('541940','Veterinary Practices','Healthcare','Veterinary','LOW','LOW'),
+('312130','Winery and Vineyard','Agriculture','Winery and Vineyard','ELEVATED','HIGH')
+ON CONFLICT (naics_code) DO UPDATE SET
+  industry_name=EXCLUDED.industry_name,
+  industry_group=EXCLUDED.industry_group,
+  public_specialty_segment=EXCLUDED.public_specialty_segment;
