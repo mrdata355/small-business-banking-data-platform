@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.oakbridge.dev/treasury/ach-event/v1",
+  "title": "Treasury ACH Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["transaction_id","event_ts","account_id","business_id","direction","amount","sec_code","transaction_status","source_system"],
+  "properties": {
+    "transaction_id": {"type":"string","pattern":"^ACH-"},
+    "event_ts": {"type":"string","format":"date-time"},
+    "account_id": {"type":"string","pattern":"^ACCT-"},
+    "business_id": {"type":"string","pattern":"^BIZ-"},
+    "direction": {"type":"string","enum":["CREDIT","DEBIT"]},
+    "amount": {"type":"number","exclusiveMinimum":0},
+    "sec_code": {"type":"string","enum":["CCD","CTX","PPD","WEB"]},
+    "transaction_status": {"type":"string","enum":["PENDING","POSTED","RETURNED"]},
+    "counterparty_token": {"type":["string","null"]},
+    "source_system": {"type":"string"}
+  }
+}
