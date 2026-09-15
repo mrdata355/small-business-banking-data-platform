@@ -37,10 +37,15 @@ jobs:
           docker compose -f docker-compose.full.yml logs stream-gateway
           exit 1
 
-      - name: Wait for Spark streaming UI
+      - name: Wait for Spark streaming UI and query initialization
         run: |
           for i in $(seq 1 90); do
-            if curl -fsS http://localhost:4040 >/dev/null; then exit 0; fi
+            if curl -fsS http://localhost:4040 >/dev/null; then
+              # The Spark UI binds before Kafka source initialization and checkpoint recovery finish.
+              # Give both continuous queries time to subscribe before producing the smoke events.
+              sleep 15
+              exit 0
+            fi
             sleep 2
           done
           docker compose -f docker-compose.full.yml logs spark-streaming
@@ -60,7 +65,6 @@ jobs:
           curl -fsS -X POST "http://localhost:8000/demo/application/${app}/4/IdentityVerificationUpdated"
           curl -fsS -X POST "http://localhost:8000/demo/application/${app}/5/Decisioned"
           for i in $(seq 1 10); do curl -fsS -X POST http://localhost:8000/demo/ach; done
-          sleep 20
 
       - name: Assert landing, Bronze and Silver objects exist
         run: |
@@ -70,12 +74,21 @@ jobs:
             echo "--- landing ---"
             mc find local/oakbridge-landing | tee /tmp/landing.txt
             test -s /tmp/landing.txt
+            ready=0
+            for i in $(seq 1 60); do
+              mc find local/oakbridge-bronze > /tmp/bronze.txt
+              mc find local/oakbridge-silver > /tmp/silver.txt
+              if test -s /tmp/bronze.txt && test -s /tmp/silver.txt; then
+                ready=1
+                break
+              fi
+              sleep 2
+            done
             echo "--- bronze ---"
-            mc find local/oakbridge-bronze | tee /tmp/bronze.txt
-            test -s /tmp/bronze.txt
+            cat /tmp/bronze.txt
             echo "--- silver ---"
-            mc find local/oakbridge-silver | tee /tmp/silver.txt
-            test -s /tmp/silver.txt
+            cat /tmp/silver.txt
+            test "$ready" -eq 1
           '
 
       - name: Assert Kafka topics and offsets
