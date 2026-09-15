@@ -1,0 +1,40 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Python: baseline platform",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/run_all.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {"PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}"}
+    },
+    {
+      "name": "Python: show results",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/show_results.py",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {"PYTHONPATH": "${workspaceFolder}/src:${workspaceFolder}"}
+    },
+    {
+      "name": "Spark: Kafka lakehouse stream",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "oakbridge.jobs.kafka_lakehouse_stream",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "env": {"PYTHONPATH": "${workspaceFolder}/src"}
+    },
+    {
+      "name": "Scale: transaction ordinal",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/scale/transaction_universe.py",
+      "args": ["--ordinal", "999999999999"],
+      "console": "integratedTerminal"
+    }
+  ]
+}
