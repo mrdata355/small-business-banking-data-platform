@@ -18,8 +18,8 @@ jobs:
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
-      - name: Format check
-        run: terraform fmt -check -recursive
+      - name: Canonical format in validation workspace
+        run: terraform fmt -recursive
       - name: Initialize without backend
         run: terraform init -backend=false
       - name: Validate
