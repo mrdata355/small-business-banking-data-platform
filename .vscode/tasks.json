@@ -1,0 +1,16 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {"label":"Platform: baseline pipeline","type":"shell","command":"python scripts/run_all.py","group":"build","problemMatcher":[]},
+    {"label":"Platform: show results","type":"shell","command":"python scripts/show_results.py","problemMatcher":[]},
+    {"label":"Quality: pytest","type":"shell","command":"pytest -q","group":"test","problemMatcher":[]},
+    {"label":"Quality: repository validation","type":"shell","command":"python scripts/validate_repository.py","group":"test","problemMatcher":[]},
+    {"label":"Quality: ruff","type":"shell","command":"ruff check src tests scripts agents digital_twin collaboration scale","group":"test","problemMatcher":[]},
+    {"label":"Full stack: up","type":"shell","command":"docker compose -f docker-compose.full.yml up --build -d","problemMatcher":[]},
+    {"label":"Full stack: status","type":"shell","command":"docker compose -f docker-compose.full.yml ps","problemMatcher":[]},
+    {"label":"Full stack: logs","type":"shell","command":"docker compose -f docker-compose.full.yml logs --tail=200 stream-gateway spark-streaming redpanda minio","problemMatcher":[]},
+    {"label":"Full stack: down","type":"shell","command":"docker compose -f docker-compose.full.yml down","problemMatcher":[]},
+    {"label":"Scale: trillion-universe evidence","type":"shell","command":"python scale/transaction_universe.py --output runtime/scale --sample-rows 10000","problemMatcher":[]},
+    {"label":"Terraform: format and validate","type":"shell","command":"cd infra/terraform && terraform fmt -recursive && terraform init -backend=false && terraform validate","problemMatcher":[]}
+  ]
+}

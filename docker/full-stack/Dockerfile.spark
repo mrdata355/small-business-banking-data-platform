@@ -1,9 +1,16 @@
-FROM python:3.11-slim
-RUN apt-get update && apt-get install -y --no-install-recommends openjdk-17-jre-headless curl && rm -rf /var/lib/apt/lists/*
+FROM python:3.11-slim-bookworm
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-17-jre-headless curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+ENV PYSPARK_PYTHON=python
+ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 COPY pyproject.toml README.md requirements-spark.txt ./
 COPY src ./src
-RUN pip install --no-cache-dir -e . && pip install --no-cache-dir -r requirements-spark.txt
+RUN pip install --no-cache-dir -e . \
+    && pip install --no-cache-dir -r requirements-spark.txt
 ENV PYTHONPATH=/app/src
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=5 \
+    CMD curl -fsS http://localhost:4040/ || exit 1
 CMD ["python", "-m", "oakbridge.jobs.kafka_lakehouse_stream"]

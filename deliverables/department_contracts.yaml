@@ -1,0 +1,99 @@
+version: 1
+scope: generated-data reference platform
+departments:
+  DATA_PLATFORM:
+    service_tier: TIER_0
+    consumes: [application_events, ach_events, identity_events, onboarding_events, github_delivery_signals]
+    produces: [bronze_replay_boundary, canonical_silver_state, reconciliation_evidence, lineage, stream_health]
+    freshness_slo_minutes: 5
+    evidence: [src/oakbridge/jobs/principal_streaming_runtime.py, sql/reconciliation/application_reconciliation.sql, monitoring]
+  DATA_SCIENCE:
+    service_tier: TIER_1
+    consumes: [canonical_application, ach_transaction, customer_360, stream_health]
+    produces: [risk_features, ach_anomaly_features, model_predictions, drift_evidence, champion_challenger_decisions]
+    freshness_slo_minutes: 60
+    evidence: [mlops, feature_store, dbt/models/fct_model_risk_monitoring.sql]
+  FINANCE:
+    service_tier: TIER_1
+    consumes: [funded_loans, treasury_activity, platform_cost, expected_loss]
+    produces: [product_profitability, cost_allocation, management_kpis, shareholder_scorecard]
+    freshness_slo_minutes: 1440
+    evidence: [dbt/models/fct_product_profitability.sql, warehouse/star_schema.sql]
+  LENDING:
+    service_tier: TIER_0
+    consumes: [canonical_application, identity_verification, document_state]
+    produces: [underwriting_readiness, application_funnel, cycle_time, exception_queue]
+    freshness_slo_minutes: 5
+    evidence: [src/oakbridge/jobs/principal_streaming_runtime.py, dbt/models/fct_application_funnel.sql]
+  TREASURY:
+    service_tier: TIER_0
+    consumes: [ach_events, business_account_state, model_predictions]
+    produces: [ach_canonical, treasury_daily_activity, anomaly_triage, returns_monitoring]
+    freshness_slo_minutes: 5
+    evidence: [contracts/ach_event_v1.schema.json, src/oakbridge/jobs/principal_streaming_runtime.py]
+  RISK:
+    service_tier: TIER_0
+    consumes: [loan_exposure, application_features, ach_anomaly, model_monitoring]
+    produces: [concentration_risk, model_risk_status, exception_priorities, risk_adjusted_metrics]
+    freshness_slo_minutes: 60
+    evidence: [enterprise/risk_concentration.py, dbt/models/fct_model_risk_monitoring.sql]
+  COMPLIANCE:
+    service_tier: TIER_0
+    consumes: [lineage, classifications, access_decisions, control_results]
+    produces: [audit_evidence, control_coverage, restricted_field_lineage, retention_evidence]
+    freshness_slo_minutes: 1440
+    evidence: [digital_twin/contract_genome.py, infra/terraform/security_controls.tf]
+  PRODUCT:
+    service_tier: TIER_1
+    consumes: [application_funnel, customer_interactions, cycle_time]
+    produces: [friction_signals, adoption_metrics, experiment_readouts, priority_recommendations]
+    freshness_slo_minutes: 60
+    evidence: [dbt/models/fct_application_funnel.sql, collaboration/recommendation_engine.py]
+  CUSTOMER_SUCCESS:
+    service_tier: TIER_1
+    consumes: [customer_interactions, application_wait_state, sentiment]
+    produces: [intervention_queue, repeat_contact_metrics, service_risk_scores]
+    freshness_slo_minutes: 15
+    evidence: [site/semantic.html, mlops/drift_monitor.py]
+  SRE:
+    service_tier: TIER_0
+    consumes: [prometheus_metrics, stream_progress, deployment_history]
+    produces: [slo_status, error_budget, capacity_forecast, incident_evidence]
+    freshness_slo_minutes: 1
+    evidence: [monitoring, dbt/models/fct_pipeline_slo.sql, .github/workflows/full-stack-smoke.yml]
+  SECURITY:
+    service_tier: TIER_0
+    consumes: [data_classification, lineage, iam_config, audit_events]
+    produces: [access_policy, encryption_evidence, least_privilege_tests, sensitive_data_controls]
+    freshness_slo_minutes: 60
+    evidence: [infra/terraform/security_controls.tf, docs/DATA_CLASSIFICATION.md]
+  EXECUTIVE:
+    service_tier: TIER_1
+    consumes: [finance_kpis, customer_kpis, risk_kpis, platform_slos]
+    produces: [operating_scorecard, cross_department_priorities, confidence_adjusted_forecast]
+    freshness_slo_minutes: 1440
+    evidence: [dbt/models/fct_shareholder_kpi.sql, agents/orchestrator.py]
+  SHAREHOLDER:
+    service_tier: TIER_2
+    consumes: [growth, profitability, risk, reliability, capital_efficiency]
+    produces: [shareholder_value_scorecard, trend_attribution, risk_adjusted_return_view]
+    freshness_slo_minutes: 1440
+    evidence: [dbt/models/fct_shareholder_kpi.sql, warehouse/star_schema.sql]
+  ARCHITECTURE:
+    service_tier: TIER_1
+    consumes: [contracts, lineage, pull_requests, deployment_targets]
+    produces: [compatibility_gates, blast_radius, target_state, technology_decisions]
+    freshness_slo_minutes: 60
+    evidence: [digital_twin/contract_genome.py, docs/DIGITAL_TWIN.md]
+  DATA_QUALITY:
+    service_tier: TIER_0
+    consumes: [source_records, quarantine, reconciliation, contract_metadata]
+    produces: [dq_results, root_cause_clusters, defect_backlog, prevention_rules]
+    freshness_slo_minutes: 5
+    evidence: [enterprise/quality_engine.py, src/oakbridge/transforms]
+  OPERATIONS:
+    service_tier: TIER_1
+    consumes: [work_graph, incidents, automation_runs, pipeline_health]
+    produces: [dependency_graph, operating_queue, handoff_prediction, runbook_execution]
+    freshness_slo_minutes: 5
+    evidence: [collaboration, orchestration/dags/enterprise_control_plane.py, dbt/models/fct_work_delivery.sql]

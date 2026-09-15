@@ -12,7 +12,7 @@ artifacts:
 variables:
   catalog:
     description: Unity Catalog catalog used by the platform.
-    default: oakbridge_dev
+    default: main
   aws_region:
     default: us-east-1
   data_root:
@@ -30,8 +30,11 @@ targets:
   dev:
     default: true
     mode: development
+    workspace:
+      host: https://dbc-a81c7db4-9f41.cloud.databricks.com
     variables:
-      catalog: oakbridge_dev
+      catalog: main
+
   prod:
     mode: production
     variables:

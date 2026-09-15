@@ -1,0 +1,61 @@
+resources:
+  schemas:
+    bronze_lending:
+      name: bronze_lending
+      catalog_name: ${var.catalog}
+      comment: Raw lending application events and replay boundary.
+    bronze_treasury:
+      name: bronze_treasury
+      catalog_name: ${var.catalog}
+      comment: Raw ACH and treasury events.
+    bronze_customer:
+      name: bronze_customer
+      catalog_name: ${var.catalog}
+      comment: Raw business onboarding and customer-domain inputs.
+    bronze_risk:
+      name: bronze_risk
+      catalog_name: ${var.catalog}
+      comment: Raw risk and identity-verification inputs.
+
+    silver_lending:
+      name: silver_lending
+      catalog_name: ${var.catalog}
+      comment: Canonical lending application state and history.
+    silver_treasury:
+      name: silver_treasury
+      catalog_name: ${var.catalog}
+      comment: Canonical treasury transactions.
+    silver_customer:
+      name: silver_customer
+      catalog_name: ${var.catalog}
+      comment: Canonical customer and business entities.
+    silver_risk:
+      name: silver_risk
+      catalog_name: ${var.catalog}
+      comment: Canonical identity, KYC, AML, and risk-state data.
+
+    gold_lending:
+      name: gold_lending
+      catalog_name: ${var.catalog}
+      comment: Lending serving layer, profitability, funnel, and underwriting readiness.
+    gold_treasury:
+      name: gold_treasury
+      catalog_name: ${var.catalog}
+      comment: Treasury serving layer, activity, and processing economics.
+    gold_customer:
+      name: gold_customer
+      catalog_name: ${var.catalog}
+      comment: Customer 360 and relationship analytics.
+
+    feature_store:
+      name: feature_store
+      catalog_name: ${var.catalog}
+      comment: Point-in-time model features and governed feature products.
+    semantic:
+      name: semantic
+      catalog_name: ${var.catalog}
+      comment: Shared semantic metrics and executive-facing data products.
+    ops:
+      name: ops
+      catalog_name: ${var.catalog}
+      comment: Data quality, pipeline health, model monitoring, and reconciliation outputs.

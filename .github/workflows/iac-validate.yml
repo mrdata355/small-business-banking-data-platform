@@ -1,0 +1,26 @@
+name: iac-validate
+
+on:
+  pull_request:
+    paths:
+      - 'infra/terraform/**'
+      - '.github/workflows/iac-validate.yml'
+  workflow_dispatch:
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v5
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+      - name: Canonical format in validation workspace
+        run: terraform fmt -recursive
+      - name: Initialize without backend
+        run: terraform init -backend=false
+      - name: Validate
+        run: terraform validate

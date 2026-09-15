@@ -1,0 +1,52 @@
+resources:
+  jobs:
+    lakeflow_medallion_refresh:
+      name: oakbridge-lakeflow-medallion-refresh-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: lending_bronze
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.lending_bronze.id}
+            full_refresh: false
+
+        - task_key: treasury_bronze
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.treasury_bronze.id}
+            full_refresh: false
+
+        - task_key: lending_silver
+          depends_on:
+            - task_key: lending_bronze
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.lending_silver.id}
+            full_refresh: false
+
+        - task_key: treasury_silver
+          depends_on:
+            - task_key: treasury_bronze
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.treasury_silver.id}
+            full_refresh: false
+
+        - task_key: lending_gold
+          depends_on:
+            - task_key: lending_silver
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.lending_gold.id}
+            full_refresh: false
+
+        - task_key: treasury_gold
+          depends_on:
+            - task_key: treasury_silver
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.treasury_gold.id}
+            full_refresh: false
+
+        - task_key: platform_ops
+          depends_on:
+            - task_key: lending_gold
+            - task_key: treasury_gold
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.platform_ops.id}
+            full_refresh: false

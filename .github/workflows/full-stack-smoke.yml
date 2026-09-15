@@ -1,0 +1,120 @@
+name: full-stack-smoke
+
+on:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  kafka-spark-delta:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Validate compose configuration
+        run: docker compose -f docker-compose.full.yml config >/tmp/full-compose.yml
+
+      - name: Build gateway and Spark images
+        run: docker compose -f docker-compose.full.yml build stream-gateway spark-streaming
+
+      - name: Start Kafka API, object store and initialization jobs
+        run: |
+          docker compose -f docker-compose.full.yml up -d redpanda minio
+          docker compose -f docker-compose.full.yml up --exit-code-from minio-init minio-init
+          docker compose -f docker-compose.full.yml up --exit-code-from topic-init topic-init
+          docker compose -f docker-compose.full.yml up --exit-code-from schema-registry-init schema-registry-init
+
+      - name: Start gateway and Spark consumer
+        run: docker compose -f docker-compose.full.yml up -d stream-gateway spark-streaming
+
+      - name: Wait for gateway
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8000/health; then exit 0; fi
+            sleep 2
+          done
+          docker compose -f docker-compose.full.yml logs stream-gateway
+          exit 1
+
+      - name: Wait for Spark streaming UI and query initialization
+        run: |
+          for i in $(seq 1 90); do
+            if curl -fsS http://localhost:4040 >/dev/null; then
+              # The Spark UI binds before Kafka source initialization and checkpoint recovery finish.
+              # Give both continuous queries time to subscribe before producing the smoke events.
+              sleep 15
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose -f docker-compose.full.yml logs spark-streaming
+          exit 1
+
+      - name: Produce application lifecycle and ACH events
+        run: |
+          first=$(curl -fsS -X POST http://localhost:8000/demo/application)
+          echo "$first" | tee /tmp/application-first.json
+          app=$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/application-first.json'))['payload']['application_id'])
+          PY
+          )
+          curl -fsS -X POST "http://localhost:8000/demo/application/${app}/2/DocumentReceived"
+          curl -fsS -X POST "http://localhost:8000/demo/application/${app}/3/FinancialPackageReceived"
+          curl -fsS -X POST "http://localhost:8000/demo/application/${app}/4/IdentityVerificationUpdated"
+          curl -fsS -X POST "http://localhost:8000/demo/application/${app}/5/Decisioned"
+          for i in $(seq 1 10); do curl -fsS -X POST http://localhost:8000/demo/ach; done
+
+      - name: Assert landing, Bronze and Silver objects exist
+        run: |
+          docker compose -f docker-compose.full.yml run --rm --entrypoint /bin/sh minio-init -c '
+            set -eu
+            mc alias set local http://minio:9000 "${MINIO_ROOT_USER:-minioadmin}" "${MINIO_ROOT_PASSWORD:-minioadmin123}"
+            echo "--- landing ---"
+            mc find local/oakbridge-landing | tee /tmp/landing.txt
+            test -s /tmp/landing.txt
+            ready=0
+            for i in $(seq 1 60); do
+              mc find local/oakbridge-bronze > /tmp/bronze.txt
+              mc find local/oakbridge-silver > /tmp/silver.txt
+              if test -s /tmp/bronze.txt && test -s /tmp/silver.txt; then
+                ready=1
+                break
+              fi
+              sleep 2
+            done
+            echo "--- bronze ---"
+            cat /tmp/bronze.txt
+            echo "--- silver ---"
+            cat /tmp/silver.txt
+            test "$ready" -eq 1
+          '
+
+      - name: Assert Kafka topics and offsets
+        run: |
+          docker compose -f docker-compose.full.yml exec -T redpanda rpk topic list
+          docker compose -f docker-compose.full.yml exec -T redpanda rpk topic describe lending.application-events.v1
+          docker compose -f docker-compose.full.yml exec -T redpanda rpk topic describe treasury.ach-events.v1
+
+      - name: Capture service logs
+        if: always()
+        run: |
+          mkdir -p smoke-evidence
+          docker compose -f docker-compose.full.yml ps > smoke-evidence/compose-ps.txt || true
+          docker compose -f docker-compose.full.yml logs --no-color stream-gateway > smoke-evidence/gateway.log || true
+          docker compose -f docker-compose.full.yml logs --no-color spark-streaming > smoke-evidence/spark.log || true
+          docker compose -f docker-compose.full.yml logs --no-color redpanda > smoke-evidence/redpanda.log || true
+          curl -fsS http://localhost:8000/metrics > smoke-evidence/gateway.prom || true
+
+      - name: Upload smoke evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kafka-spark-delta-smoke-evidence
+          path: smoke-evidence/
+          retention-days: 30
+
+      - name: Shutdown
+        if: always()
+        run: docker compose -f docker-compose.full.yml down -v
