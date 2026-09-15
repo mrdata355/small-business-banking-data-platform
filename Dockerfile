@@ -13,7 +13,6 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY tests ./tests
 COPY scripts ./scripts
-COPY sample_data ./sample_data
 COPY docs ./docs
 COPY sql ./sql
 COPY orchestration ./orchestration

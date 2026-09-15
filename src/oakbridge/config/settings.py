@@ -10,7 +10,7 @@ class Settings:
     runtime_root: Path
 
     @classmethod
-    def from_env(cls) -> "Settings":
+    def from_env(cls) -> Settings:
         return cls(Path(os.getenv("OAKBRIDGE_RUNTIME_ROOT", "runtime")).resolve())
 
     @property

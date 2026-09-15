@@ -1,15 +1,14 @@
 from pprint import pprint
 
+from seed_data import seed
+
 from oakbridge.common.spark import build_spark
-from oakbridge.config.settings import Settings
 from oakbridge.jobs.ach_pipeline import run_ach_pipeline
 from oakbridge.jobs.application_pipeline import run_application_pipeline
 from oakbridge.jobs.gold_pipeline import build_gold_outputs
 from oakbridge.jobs.identity_pipeline import run_identity_pipeline
 from oakbridge.jobs.onboarding_pipeline import run_onboarding_pipeline
 from oakbridge.jobs.reconciliation import reconcile_applications
-
-from seed_data import seed
 
 
 def main():

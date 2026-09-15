@@ -3,7 +3,6 @@ from pathlib import Path
 from oakbridge.common.spark import build_spark
 from oakbridge.config.settings import Settings
 
-
 DATASETS = [
     ("Silver business onboarding", "silver", "business_onboarding"),
     ("Silver loan application", "silver", "loan_application"),
