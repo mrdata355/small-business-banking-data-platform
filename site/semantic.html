@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Semantic Layer & BI</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    .sem-shell{width:min(1200px,calc(100% - 28px));margin:auto}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0}.nav a{color:var(--accent2);text-decoration:none;border:1px solid var(--line);padding:8px 11px;border-radius:9px}.metric-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}.metric strong{font-size:23px;display:block}.metric span{font-size:11px;color:var(--muted)}.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.chart-card,.card,.table-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}.chart-wrap{height:300px}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}.card h3{margin:0 0 7px}.card p{color:var(--muted);font-size:13px}.card a{color:var(--accent2)}.table-card{margin-top:14px}.table-wrap{overflow:auto;max-height:360px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #223248;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#122034}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}@media(max-width:900px){.metric-grid{grid-template-columns:repeat(3,1fr)}.chart-grid,.cards{grid-template-columns:1fr}}@media(max-width:560px){.metric-grid{grid-template-columns:repeat(2,1fr)}}
+  </style>
+</head>
+<body>
+<main class="sem-shell">
+  <nav class="nav"><a href="/">Platform</a><a href="/live.html">Live data</a><a href="/observability.html">Observability</a><a href="/automations.html">Automations</a><a href="/mlops.html">MLOps</a><a href="/lakehouse.html">Lakehouse</a></nav>
+  <p class="eyebrow">SEMANTIC LAYER</p>
+  <h1 style="font-size:clamp(34px,6vw,60px);margin:0">Semantic Metrics & BI</h1>
+  <p class="lede">Stable analytical definitions sit above transport and storage details. The same contracts can feed browser dashboards and Power BI without redefining business logic in each report.</p>
+
+  <section><div class="metric-grid" id="metrics"></div></section>
+
+  <section class="chart-grid">
+    <div class="chart-card"><h3>Application status</h3><div class="chart-wrap"><canvas id="applicationStatus"></canvas></div></div>
+    <div class="chart-card"><h3>Underwriting readiness</h3><div class="chart-wrap"><canvas id="readiness"></canvas></div></div>
+    <div class="chart-card"><h3>Treasury credit vs debit</h3><div class="chart-wrap"><canvas id="treasuryDirection"></canvas></div></div>
+    <div class="chart-card"><h3>Customer sentiment</h3><div class="chart-wrap"><canvas id="sentiment"></canvas></div></div>
+  </section>
+
+  <section class="cards">
+    <article class="card"><h3>Power BI data source</h3><p>Preconfigured PostgreSQL server/database definition with no credentials stored in Git.</p><a href="https://github.com/mrdata355/small-business-banking-data-platform/raw/main/bi/powerbi/oakbridge-live.pbids">Download .pbids</a> · <a href="https://app.powerbi.com/" target="_blank">Open Power BI</a></article>
+    <article class="card"><h3>Power Query</h3><p>M definitions point Power BI at the deployed semantic views.</p><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/bi/powerbi/PowerQuery.m" target="_blank">Open Power Query M</a></article>
+    <article class="card"><h3>Semantic SQL</h3><p>The live Postgres backend already contains the deployed semantic views used by the BI contract.</p><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/semantic/sql/postgres_views.sql" target="_blank">Open view definitions</a></article>
+  </section>
+
+  <section class="table-card"><h3>Semantic contracts</h3><div class="table-wrap"><table><thead><tr><th>View / metric</th><th>Purpose</th><th>Grain</th></tr></thead><tbody>
+    <tr><td class="mono">sem_application_funnel</td><td>Application count, requested amount and readiness by status/product</td><td>status × product</td></tr>
+    <tr><td class="mono">sem_treasury_activity</td><td>ACH volume, amounts, anomaly score and risk flags</td><td>date × direction × status</td></tr>
+    <tr><td class="mono">sem_pipeline_quality</td><td>Landing, clean, quarantine, duplicate and DQ rates</td><td>platform snapshot</td></tr>
+    <tr><td class="mono">sem_customer_sentiment</td><td>Interaction volume and average sentiment</td><td>hour × channel × sentiment</td></tr>
+    <tr><td class="mono">sem_model_risk</td><td>Prediction volume and probability by model/version/risk band</td><td>model × version × band</td></tr>
+    <tr><td class="mono">applications_ready_for_underwriting</td><td>Canonical applications satisfying readiness prerequisites</td><td>platform KPI</td></tr>
+    <tr><td class="mono">quarantine_rate</td><td>Quarantined arrivals / all arrivals</td><td>platform KPI</td></tr>
+    <tr><td class="mono">duplicate_delivery_rate</td><td>Ignored duplicate deliveries / all arrivals</td><td>platform KPI</td></tr>
+  </tbody></table></div></section>
+</main>
+<script src="/semantic.js"></script>
+</body>
+</html>
