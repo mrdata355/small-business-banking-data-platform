@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://schemas.oakbridge.dev/lending/application-event/v1",
+  "title": "Lending Application Event v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["event_id","event_type","event_version","event_ts","application_id","customer_id","business_id","product_code","application_status","documents_complete","financial_package_complete","identity_verification_status","source_system"],
+  "properties": {
+    "event_id": {"type":"string","minLength":1},
+    "event_type": {"type":"string","enum":["LoanApplicationSubmitted","ApplicationStatusChanged","DocumentReceived","FinancialPackageReceived","IdentityVerificationUpdated","Decisioned"]},
+    "event_version": {"type":"integer","minimum":1},
+    "event_ts": {"type":"string","format":"date-time"},
+    "application_id": {"type":"string","pattern":"^APP-"},
+    "customer_id": {"type":"string","pattern":"^CUST-"},
+    "business_id": {"type":"string","pattern":"^BIZ-"},
+    "product_code": {"type":"string","enum":["SBA_7A","USDA_BI","CONVENTIONAL","CUSTOM"]},
+    "requested_amount": {"type":["number","null"],"minimum":0},
+    "use_of_funds": {"type":["string","null"]},
+    "application_status": {"type":"string","enum":["SUBMITTED","DOCUMENTS_PENDING","REVIEW","READY_FOR_UNDERWRITING","DECISIONED","FUNDED","DECLINED"]},
+    "documents_complete": {"type":"boolean"},
+    "financial_package_complete": {"type":"boolean"},
+    "identity_verification_status": {"type":"string","enum":["PENDING","VERIFIED","REVIEW","FAILED"]},
+    "source_system": {"type":"string"},
+    "trace_id": {"type":["string","null"]}
+  }
+}
