@@ -1,0 +1,72 @@
+version: 2
+
+sources:
+  - name: silver_lending
+    schema: silver_lending
+    loaded_at_field: updated_at
+    freshness:
+      warn_after: {count: 15, period: minute}
+      error_after: {count: 60, period: minute}
+    tables:
+      - name: loan_application
+        description: Canonical current lending application state.
+        columns:
+          - name: application_id
+            tests: [not_null, unique]
+          - name: customer_id
+            tests: [not_null]
+          - name: business_id
+            tests: [not_null]
+          - name: event_version
+            tests: [not_null]
+      - name: loan_application_status_history
+        description: Append-only application state history.
+        columns:
+          - name: event_id
+            tests: [not_null, unique]
+          - name: application_id
+            tests: [not_null]
+
+  - name: silver_treasury
+    schema: silver_treasury
+    loaded_at_field: event_ts
+    freshness:
+      warn_after: {count: 10, period: minute}
+      error_after: {count: 30, period: minute}
+    tables:
+      - name: ach_transaction
+        columns:
+          - name: transaction_id
+            tests: [not_null, unique]
+          - name: business_id
+            tests: [not_null]
+          - name: amount
+            tests: [not_null]
+
+  - name: silver_customer
+    schema: silver_customer
+    tables:
+      - name: business
+        columns:
+          - name: business_id
+            tests: [not_null, unique]
+      - name: customer
+        columns:
+          - name: customer_id
+            tests: [not_null, unique]
+
+  - name: silver_risk
+    schema: silver_risk
+    tables:
+      - name: identity_verification
+        columns:
+          - name: application_id
+            tests: [not_null, unique]
+
+  - name: ops
+    schema: ops
+    tables:
+      - name: pipeline_reconciliation
+      - name: data_quality_result
+      - name: stream_health
+      - name: model_monitoring
