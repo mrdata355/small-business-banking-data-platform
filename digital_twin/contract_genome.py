@@ -84,16 +84,28 @@ class ContractGenomeGraph:
         new_fields = {name: (dtype, nullable) for name, dtype, nullable in proposed.fields}
 
         removed = sorted(set(old_fields) - set(new_fields))
-        type_changes = sorted(name for name in set(old_fields) & set(new_fields) if old_fields[name][0] != new_fields[name][0])
-        tightened_nullability = sorted(name for name in set(old_fields) & set(new_fields) if old_fields[name][1] and not new_fields[name][1])
-        added_required = sorted(name for name in set(new_fields) - set(old_fields) if not new_fields[name][1])
+        type_changes = sorted(
+            name
+            for name in set(old_fields) & set(new_fields)
+            if old_fields[name][0] != new_fields[name][0]
+        )
+        tightened_nullability = sorted(
+            name
+            for name in set(old_fields) & set(new_fields)
+            if old_fields[name][1] and not new_fields[name][1]
+        )
+        added_required = sorted(
+            name for name in set(new_fields) - set(old_fields) if not new_fields[name][1]
+        )
 
         if previous.grain != proposed.grain:
             reasons.append(f"grain changed: {previous.grain} -> {proposed.grain}")
             risk += 0.45
         if previous.business_keys != proposed.business_keys:
             reasons.append("business key changed")
-            risk += 0.45
+            # A business-key change alters identity and merge semantics. Treat it as
+            # breaking on its own rather than allowing it to fall into manual review.
+            risk += 0.55
         if removed:
             reasons.append(f"removed fields: {', '.join(removed)}")
             risk += min(0.35, 0.08 * len(removed))
@@ -110,7 +122,9 @@ class ContractGenomeGraph:
             reasons.append("freshness SLO tightened")
             risk += 0.08
         if proposed.classification != previous.classification:
-            reasons.append(f"classification changed: {previous.classification} -> {proposed.classification}")
+            reasons.append(
+                f"classification changed: {previous.classification} -> {proposed.classification}"
+            )
             risk += 0.18
 
         risk = min(1.0, risk)
@@ -149,8 +163,12 @@ class ContractGenomeGraph:
         direct = sorted(self.edges.get(change.asset, ()))
         transitive = self.descendants(change.asset)
         critical_targets = {
-            asset for asset in transitive
-            if any(token in asset.lower() for token in ("gold", "underwriting", "risk", "finance", "regulatory", "shareholder"))
+            asset
+            for asset in transitive
+            if any(
+                token in asset.lower()
+                for token in ("gold", "underwriting", "risk", "finance", "regulatory", "shareholder")
+            )
         }
         paths = self._paths(change.asset, critical_targets)
         amplification = min(0.35, len(transitive) * 0.015 + len(paths) * 0.025)
@@ -168,58 +186,130 @@ class ContractGenomeGraph:
 def default_contract_graph() -> ContractGenomeGraph:
     contracts = [
         DataContract(
-            asset="bronze_lending.loan_application_event_raw", version="1.0.0",
-            grain="one row per delivered application event", business_keys=("event_id",),
-            fields=(("event_id","string",False),("application_id","string",False),("event_version","long",False),("event_ts","timestamp",False),("application_status","string",False)),
-            freshness_slo_seconds=120, owner="data-platform", classification="CONFIDENTIAL",
-            downstream=("silver_lending.loan_application_status_history","silver_lending.loan_application"),
-            quality_rules=("event_id_not_null","event_version_positive","status_domain"),
+            asset="bronze_lending.loan_application_event_raw",
+            version="1.0.0",
+            grain="one row per delivered application event",
+            business_keys=("event_id",),
+            fields=(
+                ("event_id", "string", False),
+                ("application_id", "string", False),
+                ("event_version", "long", False),
+                ("event_ts", "timestamp", False),
+                ("application_status", "string", False),
+            ),
+            freshness_slo_seconds=120,
+            owner="data-platform",
+            classification="CONFIDENTIAL",
+            downstream=(
+                "silver_lending.loan_application_status_history",
+                "silver_lending.loan_application",
+            ),
+            quality_rules=("event_id_not_null", "event_version_positive", "status_domain"),
         ),
         DataContract(
-            asset="silver_lending.loan_application_status_history", version="1.0.0",
-            grain="one row per accepted business event", business_keys=("event_id",),
-            fields=(("event_id","string",False),("application_id","string",False),("event_version","long",False),("event_ts","timestamp",False)),
-            freshness_slo_seconds=150, owner="lending-data", classification="CONFIDENTIAL",
-            upstream=("bronze_lending.loan_application_event_raw",), downstream=("ops.pipeline_reconciliation",),
+            asset="silver_lending.loan_application_status_history",
+            version="1.0.0",
+            grain="one row per accepted business event",
+            business_keys=("event_id",),
+            fields=(
+                ("event_id", "string", False),
+                ("application_id", "string", False),
+                ("event_version", "long", False),
+                ("event_ts", "timestamp", False),
+            ),
+            freshness_slo_seconds=150,
+            owner="lending-data",
+            classification="CONFIDENTIAL",
+            upstream=("bronze_lending.loan_application_event_raw",),
+            downstream=("ops.pipeline_reconciliation",),
         ),
         DataContract(
-            asset="silver_lending.loan_application", version="1.0.0",
-            grain="one current row per application", business_keys=("application_id",),
-            fields=(("application_id","string",False),("event_version","long",False),("application_status","string",False),("ready_for_underwriting","boolean",False)),
-            freshness_slo_seconds=180, owner="lending-data", classification="CONFIDENTIAL",
-            upstream=("bronze_lending.loan_application_event_raw",), downstream=("gold_lending.underwriting_readiness_queue","feature_store.application_risk_features"),
+            asset="silver_lending.loan_application",
+            version="1.0.0",
+            grain="one current row per application",
+            business_keys=("application_id",),
+            fields=(
+                ("application_id", "string", False),
+                ("event_version", "long", False),
+                ("application_status", "string", False),
+                ("ready_for_underwriting", "boolean", False),
+            ),
+            freshness_slo_seconds=180,
+            owner="lending-data",
+            classification="CONFIDENTIAL",
+            upstream=("bronze_lending.loan_application_event_raw",),
+            downstream=(
+                "gold_lending.underwriting_readiness_queue",
+                "feature_store.application_risk_features",
+            ),
         ),
         DataContract(
-            asset="gold_lending.underwriting_readiness_queue", version="1.0.0",
-            grain="one current row per application meeting readiness rules", business_keys=("application_id",),
-            fields=(("application_id","string",False),("ready_for_underwriting","boolean",False)),
-            freshness_slo_seconds=240, owner="lending-operations", classification="CONFIDENTIAL",
-            upstream=("silver_lending.loan_application",), downstream=("shareholder.lending_funnel_kpi",),
+            asset="gold_lending.underwriting_readiness_queue",
+            version="1.0.0",
+            grain="one current row per application meeting readiness rules",
+            business_keys=("application_id",),
+            fields=(
+                ("application_id", "string", False),
+                ("ready_for_underwriting", "boolean", False),
+            ),
+            freshness_slo_seconds=240,
+            owner="lending-operations",
+            classification="CONFIDENTIAL",
+            upstream=("silver_lending.loan_application",),
+            downstream=("shareholder.lending_funnel_kpi",),
         ),
         DataContract(
-            asset="feature_store.application_risk_features", version="1.0.0",
-            grain="one feature vector per application scoring timestamp", business_keys=("application_id","feature_ts"),
-            fields=(("application_id","string",False),("feature_ts","timestamp",False),("missing_document_count","int",False)),
-            freshness_slo_seconds=300, owner="data-science", classification="CONFIDENTIAL",
-            upstream=("silver_lending.loan_application",), downstream=("ml.application_operational_risk"),
+            asset="feature_store.application_risk_features",
+            version="1.0.0",
+            grain="one feature vector per application scoring timestamp",
+            business_keys=("application_id", "feature_ts"),
+            fields=(
+                ("application_id", "string", False),
+                ("feature_ts", "timestamp", False),
+                ("missing_document_count", "int", False),
+            ),
+            freshness_slo_seconds=300,
+            owner="data-science",
+            classification="CONFIDENTIAL",
+            upstream=("silver_lending.loan_application",),
+            downstream=("ml.application_operational_risk",),
         ),
         DataContract(
-            asset="ml.application_operational_risk", version="1.0.0",
-            grain="one model prediction per application score", business_keys=("prediction_id",),
-            fields=(("prediction_id","string",False),("application_id","string",False),("risk_probability","double",False)),
-            freshness_slo_seconds=360, owner="ml-platform", classification="CONFIDENTIAL",
-            upstream=("feature_store.application_risk_features",), downstream=("risk.application_monitoring",),
+            asset="ml.application_operational_risk",
+            version="1.0.0",
+            grain="one model prediction per application score",
+            business_keys=("prediction_id",),
+            fields=(
+                ("prediction_id", "string", False),
+                ("application_id", "string", False),
+                ("risk_probability", "double", False),
+            ),
+            freshness_slo_seconds=360,
+            owner="ml-platform",
+            classification="CONFIDENTIAL",
+            upstream=("feature_store.application_risk_features",),
+            downstream=("risk.application_monitoring",),
         ),
         DataContract(
-            asset="ops.pipeline_reconciliation", version="1.0.0",
-            grain="one reconciliation record per pipeline run", business_keys=("run_id",),
-            fields=(("run_id","string",False),("balanced","boolean",False)), freshness_slo_seconds=3600,
-            owner="data-platform", classification="INTERNAL", upstream=("silver_lending.loan_application_status_history",),
+            asset="ops.pipeline_reconciliation",
+            version="1.0.0",
+            grain="one reconciliation record per pipeline run",
+            business_keys=("run_id",),
+            fields=(("run_id", "string", False), ("balanced", "boolean", False)),
+            freshness_slo_seconds=3600,
+            owner="data-platform",
+            classification="INTERNAL",
+            upstream=("silver_lending.loan_application_status_history",),
         ),
         DataContract(
-            asset="shareholder.lending_funnel_kpi", version="1.0.0", grain="one metric row per date/product/industry",
-            business_keys=("date_key","product_key","industry_key"), fields=(("metric_value","decimal",False),),
-            freshness_slo_seconds=86400, owner="finance-analytics", classification="INTERNAL",
+            asset="shareholder.lending_funnel_kpi",
+            version="1.0.0",
+            grain="one metric row per date/product/industry",
+            business_keys=("date_key", "product_key", "industry_key"),
+            fields=(("metric_value", "decimal", False),),
+            freshness_slo_seconds=86400,
+            owner="finance-analytics",
+            classification="INTERNAL",
             upstream=("gold_lending.underwriting_readiness_queue",),
         ),
     ]
