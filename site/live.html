@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Live generated banking event ingestion, object landing, quality controls and canonical merge console." />
+  <title>Live Banking Data Console</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .live-shell{width:min(1240px,calc(100% - 28px));margin:0 auto}.live-hero{padding:34px 0 24px;border-bottom:1px solid var(--line)}
+    .toolbar{display:flex;gap:9px;flex-wrap:wrap;margin:18px 0}.toolbar button,.toolbar select{min-height:42px;border-radius:9px;border:1px solid var(--line);background:#0e1a2a;color:var(--text);padding:9px 12px;font-weight:700}.toolbar button{cursor:pointer}.toolbar button:hover{border-color:var(--accent)}.toolbar button.primary{background:var(--accent);color:#07101d;border-color:var(--accent)}.toolbar button.danger{border-color:#7f3942;color:#ffc7ce}.toolbar button:disabled{opacity:.5;cursor:not-allowed}
+    .metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}.metric{border:1px solid var(--line);border-radius:12px;padding:13px;background:var(--panel)}.metric strong{display:block;font-size:24px}.metric span{font-size:12px;color:var(--muted)}
+    .panel{margin:16px 0;border:1px solid var(--line);border-radius:14px;background:var(--panel);overflow:hidden}.panel-head{display:flex;justify-content:space-between;gap:14px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.panel-head h2{font-size:18px;margin:0}.panel-head span{font-size:12px;color:var(--muted)}
+    .table-wrap{overflow:auto;max-height:360px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:9px 11px;border-bottom:1px solid #1d2b3f;white-space:nowrap}th{position:sticky;top:0;background:#122034;color:#c9d6e6;z-index:1}td{color:#dbe5f0}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.ok{color:#67dfa2}.bad{color:#ff919c}.pending{color:#ffd37d}.object{max-width:470px;overflow:hidden;text-overflow:ellipsis}.empty{padding:22px;color:var(--muted)}
+    .result{border:1px solid var(--line);border-radius:12px;background:#0b1625;padding:14px;margin-top:14px}.result pre{white-space:pre-wrap;word-break:break-word;color:#cfe0f2;font-size:12px;margin:8px 0 0}.result-head{display:flex;justify-content:space-between;gap:10px;align-items:center}.status-dot{width:9px;height:9px;border-radius:50%;background:#67dfa2;display:inline-block;margin-right:7px}.muted{color:var(--muted)}
+    .explain{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:18px 0}.step{border:1px solid var(--line);border-radius:12px;padding:13px;background:#0e1a2a}.step b{display:block;margin-bottom:4px}.step span{font-size:12px;color:var(--muted)}
+    @media(max-width:900px){.metrics{grid-template-columns:repeat(3,1fr)}.explain{grid-template-columns:1fr 1fr}}@media(max-width:560px){.metrics{grid-template-columns:1fr 1fr}.explain{grid-template-columns:1fr}.live-shell{width:min(100% - 18px,1240px)}}
+  </style>
+</head>
+<body>
+  <header class="live-hero"><div class="live-shell">
+    <p class="eyebrow">LIVE DATA CONSOLE</p>
+    <h1 style="font-size:clamp(34px,6vw,58px);margin:0">Ingestion → Clean → Merge</h1>
+    <p class="lede">Buttons below create new generated events in a persistent live database. Every request writes a landing object, records the stream arrival, applies quality and deduplication rules, and updates canonical application state when valid.</p>
+    <div class="hero-actions"><a class="button" href="/">Platform home</a><a class="button" href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">Repository</a></div>
+  </div></header>
+
+  <main class="live-shell">
+    <section style="padding-top:28px">
+      <div class="explain">
+        <div class="step"><b>1. Landing object</b><span>Persistent object-key record simulates a new object landing in an S3-style prefix.</span></div>
+        <div class="step"><b>2. Stream arrival</b><span>Every arrival is recorded, including duplicates and invalid messages.</span></div>
+        <div class="step"><b>3. Clean / quarantine</b><span>Valid unique events move forward; invalid records are retained with a DQ reason.</span></div>
+        <div class="step"><b>4. Canonical merge</b><span>Only newer valid state updates the current application row.</span></div>
+      </div>
+
+      <div class="toolbar">
+        <button class="primary" data-action="new_application">Create new application</button>
+        <select id="applicationSelect" aria-label="Active application"><option value="">Select application</option></select>
+        <button data-action="document_received">Add document event</button>
+        <button data-action="financial_package">Add financial package</button>
+        <button data-action="identity_verified">Verify identity</button>
+        <button data-action="decisioned">Mark decisioned</button>
+        <button data-action="duplicate_last">Replay duplicate</button>
+        <button class="danger" data-action="invalid_event">Send invalid event</button>
+        <button id="refreshButton">Refresh</button>
+      </div>
+
+      <div id="lastResult" class="result"><div class="result-head"><strong><span class="status-dot"></span>Live backend connected</strong><span class="muted" id="lastUpdated">Loading…</span></div><pre id="resultBody">Choose “Create new application” to begin.</pre></div>
+    </section>
+
+    <section style="padding-top:18px"><div class="metrics" id="metrics"></div></section>
+
+    <section class="panel"><div class="panel-head"><h2>Canonical applications</h2><span>Current merged state</span></div><div class="table-wrap"><table><thead><tr><th>Application</th><th>Version</th><th>Status</th><th>Docs</th><th>Financials</th><th>Identity</th><th>Ready</th><th>Updated</th></tr></thead><tbody id="canonicalBody"></tbody></table></div></section>
+
+    <section class="panel"><div class="panel-head"><h2>Landing bucket</h2><span>Persistent object arrivals</span></div><div class="table-wrap"><table><thead><tr><th>Received</th><th>Bucket</th><th>Object key</th><th>Type</th><th>Application</th><th>Event</th></tr></thead><tbody id="landingBody"></tbody></table></div></section>
+
+    <section class="panel"><div class="panel-head"><h2>Stream arrivals</h2><span>Raw event delivery history</span></div><div class="table-wrap"><table><thead><tr><th>Received</th><th>Event</th><th>Application</th><th>Type</th><th>Version</th></tr></thead><tbody id="arrivalsBody"></tbody></table></div></section>
+
+    <section class="panel"><div class="panel-head"><h2>Quarantine</h2><span>Records blocked by data-quality rules</span></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Event</th><th>Application</th><th>Reason</th></tr></thead><tbody id="quarantineBody"></tbody></table></div></section>
+
+    <section class="panel"><div class="panel-head"><h2>Pipeline audit</h2><span>Merge, duplicate and quarantine outcomes</span></div><div class="table-wrap"><table><thead><tr><th>Time</th><th>Action</th><th>Application</th><th>Event</th><th>Outcome</th><th>Landing object</th></tr></thead><tbody id="auditBody"></tbody></table></div></section>
+  </main>
+  <script src="/live.js"></script>
+</body>
+</html>
