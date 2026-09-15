@@ -46,11 +46,6 @@ services:
       - "9001:9001"
     volumes:
       - minio-data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9000/minio/health/live || exit 1"]
-      interval: 5s
-      timeout: 4s
-      retries: 20
 
   minio-init:
     image: minio/mc:RELEASE.2025-02-08T19-14-21Z
@@ -62,7 +57,7 @@ services:
     entrypoint: ["/bin/sh", "/bootstrap/minio-init.sh"]
     depends_on:
       minio:
-        condition: service_healthy
+        condition: service_started
 
   topic-init:
     image: redpandadata/redpanda:v24.2.18
@@ -151,6 +146,9 @@ services:
       dockerfile: docker/full-stack/Dockerfile.mlops
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     command: python mlops/train_models.py
     depends_on:
       mlflow:
@@ -162,6 +160,9 @@ services:
       dockerfile: docker/full-stack/Dockerfile.mlops
     environment:
       MLFLOW_TRACKING_URI: http://mlflow:5000
+      MLFLOW_S3_ENDPOINT_URL: http://minio:9000
+      AWS_ACCESS_KEY_ID: ${MINIO_ROOT_USER:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${MINIO_ROOT_PASSWORD:-minioadmin123}
     command: uvicorn services.model_api:app --host 0.0.0.0 --port 8010
     ports:
       - "8010:8010"
