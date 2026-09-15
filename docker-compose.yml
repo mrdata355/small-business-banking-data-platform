@@ -1,0 +1,10 @@
+services:
+  platform:
+    build: .
+    working_dir: /workspace
+    environment:
+      OAKBRIDGE_RUNTIME_ROOT: /workspace/runtime
+      SPARK_LOCAL_IP: 127.0.0.1
+    volumes:
+      - ./runtime:/workspace/runtime
+    command: python scripts/run_all.py

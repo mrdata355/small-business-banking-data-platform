@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Small-business banking data platform: Spark streaming, AWS, Databricks, Airflow, SQL, testing and CI/CD evidence." />
+  <title>Small Business Banking Data Platform</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="hero">
+    <div class="shell">
+      <p class="eyebrow">DATA PLATFORM</p>
+      <h1>Small Business Banking Data Platform</h1>
+      <p class="lede">A production-style data platform covering lending applications, digital business onboarding, identity verification and treasury / ACH activity.</p>
+      <div class="hero-actions">
+        <a class="button primary" href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">View repository</a>
+        <a class="button" href="https://github.dev/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">Open VS Code Web</a>
+        <a class="button" href="vscode://vscode.git/clone?url=https://github.com/mrdata355/small-business-banking-data-platform.git">Clone in VS Code</a>
+      </div>
+      <div class="status-row">
+        <a href="https://github.com/mrdata355/small-business-banking-data-platform/actions/workflows/ci.yml" target="_blank" rel="noreferrer"><img src="https://github.com/mrdata355/small-business-banking-data-platform/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+        <span>Generated data only</span>
+        <span>Local-first runtime</span>
+      </div>
+    </div>
+  </header>
+
+  <main class="shell">
+    <section>
+      <div class="section-heading"><p class="eyebrow">PIPELINES</p><h2>End-to-end domains</h2></div>
+      <div class="grid cards-4">
+        <article class="card"><h3>Lending applications</h3><p>Application events flow through Bronze, data-quality checks, watermark-backed deduplication, history and current-state outputs.</p><div class="links"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/jobs/application_pipeline.py" target="_blank" rel="noreferrer">Pipeline source</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/schemas/application.py" target="_blank" rel="noreferrer">Schema</a></div></article>
+        <article class="card"><h3>Business onboarding</h3><p>Generated customer and business onboarding records are normalized into a controlled current-state business profile.</p><div class="links"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/jobs/onboarding_pipeline.py" target="_blank" rel="noreferrer">Pipeline source</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/schemas/onboarding.py" target="_blank" rel="noreferrer">Schema</a></div></article>
+        <article class="card"><h3>Identity verification</h3><p>Vendor identity files land independently and converge with canonical application state to determine operational readiness.</p><div class="links"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/jobs/identity_pipeline.py" target="_blank" rel="noreferrer">Pipeline source</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/schemas/identity.py" target="_blank" rel="noreferrer">Schema</a></div></article>
+        <article class="card"><h3>Treasury / ACH</h3><p>ACH events are validated, deduplicated and aggregated into business-level daily treasury activity.</p><div class="links"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/jobs/ach_pipeline.py" target="_blank" rel="noreferrer">Pipeline source</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/src/oakbridge/schemas/ach.py" target="_blank" rel="noreferrer">Schema</a></div></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><p class="eyebrow">EVIDENCE</p><h2>Open the implementation</h2></div>
+      <div class="grid cards-3 evidence">
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docs/ARCHITECTURE.md" target="_blank" rel="noreferrer"><strong>Architecture</strong><span>Domain boundaries, layer design and correctness controls</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docs/DATA_FLOW.md" target="_blank" rel="noreferrer"><strong>Data flow</strong><span>Source-to-Gold pipeline diagram</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/src/oakbridge" target="_blank" rel="noreferrer"><strong>Python package</strong><span>Version-controlled application code under src/</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/tests" target="_blank" rel="noreferrer"><strong>Tests</strong><span>Unit and integration contracts</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/.github/workflows/ci.yml" target="_blank" rel="noreferrer"><strong>CI/CD</strong><span>Java/Python setup, lint and tests</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/databricks.yml" target="_blank" rel="noreferrer"><strong>Databricks bundle</strong><span>Environment targets and job resources</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/infra/terraform" target="_blank" rel="noreferrer"><strong>AWS infrastructure</strong><span>Kinesis, S3, DynamoDB, Glue, Lambda, ECS, EMR Serverless and CloudWatch</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/orchestration/dags/reconciliation_dag.py" target="_blank" rel="noreferrer"><strong>Airflow</strong><span>Finite reconciliation orchestration</span></a>
+        <a class="evidence-card" href="https://github.com/mrdata355/small-business-banking-data-platform/tree/main/sql" target="_blank" rel="noreferrer"><strong>SQL</strong><span>Delta DDL and reconciliation queries</span></a>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><p class="eyebrow">DEVELOPMENT</p><h2>Open the configured workspace</h2></div>
+      <div class="grid cards-3">
+        <article class="card"><h3>VS Code</h3><p>Workspace settings, Python testing configuration and the full repository are available directly in the browser or desktop client.</p><div class="links vertical"><a href="https://github.dev/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">Open VS Code Web</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/small-business-banking-data-platform.code-workspace" target="_blank" rel="noreferrer">Workspace configuration</a></div></article>
+        <article class="card"><h3>Databricks notebook</h3><p>The notebook is intentionally thin and points back to the production package rather than owning core business logic.</p><div class="links vertical"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/notebooks/databricks/00_platform_walkthrough.py" target="_blank" rel="noreferrer">Open notebook source</a><a href="https://github.dev/mrdata355/small-business-banking-data-platform/blob/main/notebooks/databricks/00_platform_walkthrough.py" target="_blank" rel="noreferrer">Open notebook in VS Code Web</a></div></article>
+        <article class="card"><h3>Local runtime</h3><p>Docker runs Spark locally, seeds generated data, executes all pipelines, writes evidence datasets and runs reconciliation.</p><div class="links vertical"><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docker-compose.yml" target="_blank" rel="noreferrer">Docker Compose</a><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docs/LOCAL_RUN.md" target="_blank" rel="noreferrer">Run instructions</a></div></article>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-heading"><p class="eyebrow">STACK</p><h2>Platform components</h2></div>
+      <div class="stack-list"><span>Python</span><span>PySpark</span><span>Spark Structured Streaming</span><span>SQL</span><span>Parquet</span><span>Delta patterns</span><span>Databricks</span><span>Airflow</span><span>Docker</span><span>GitHub Actions</span><span>Terraform</span><span>AWS Kinesis</span><span>AWS S3</span><span>DynamoDB</span><span>AWS Glue</span><span>AWS Lambda</span><span>Amazon ECS</span><span>EMR Serverless</span><span>CloudWatch</span></div>
+    </section>
+  </main>
+
+  <footer><div class="shell footer-content"><span>Small Business Banking Data Platform</span><a href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank" rel="noreferrer">GitHub repository</a></div></footer>
+</body>
+</html>

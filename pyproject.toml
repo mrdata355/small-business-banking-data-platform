@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oakbridge-banking-data-platform"
+version = "0.1.0"
+description = "Local-first Spark data platform for small-business banking domains"
+requires-python = ">=3.11"
+dependencies = [
+  "pyspark==3.5.3",
+]
+
+[project.scripts]
+oakbridge-dbx-application = "oakbridge.databricks.jobs:application_main"
+oakbridge-dbx-identity = "oakbridge.databricks.jobs:identity_main"
+oakbridge-dbx-onboarding = "oakbridge.databricks.jobs:onboarding_main"
+oakbridge-dbx-ach = "oakbridge.databricks.jobs:ach_main"
+oakbridge-dbx-gold = "oakbridge.databricks.jobs:gold_main"
+oakbridge-dbx-reconciliation = "oakbridge.databricks.jobs:reconciliation_main"
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3,<9",
+  "ruff>=0.6,<1",
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

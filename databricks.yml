@@ -1,0 +1,43 @@
+bundle:
+  name: oakbridge-banking-data-platform
+
+include:
+  - resources/*.yml
+
+artifacts:
+  default:
+    type: whl
+    build: python -m pip install --quiet build && python -m build --wheel
+
+variables:
+  catalog:
+    description: Unity Catalog catalog used by the platform.
+    default: oakbridge_dev
+  aws_region:
+    default: us-east-1
+  data_root:
+    default: s3://oakbridge-dev-data-us-east-1
+  checkpoint_root:
+    default: s3://oakbridge-dev-stream-state-us-east-1/checkpoints
+  schema_root:
+    default: s3://oakbridge-dev-stream-state-us-east-1/schemas
+  application_stream:
+    default: oakbridge-dev-us-east-1-lending-application-events-v1
+  ach_stream:
+    default: oakbridge-dev-us-east-1-treasury-ach-events-v1
+
+targets:
+  dev:
+    default: true
+    mode: development
+    variables:
+      catalog: oakbridge_dev
+  prod:
+    mode: production
+    variables:
+      catalog: oakbridge_prod
+      data_root: s3://oakbridge-prod-data-us-east-1
+      checkpoint_root: s3://oakbridge-prod-stream-state-us-east-1/checkpoints
+      schema_root: s3://oakbridge-prod-stream-state-us-east-1/schemas
+      application_stream: oakbridge-prod-us-east-1-lending-application-events-v1
+      ach_stream: oakbridge-prod-us-east-1-treasury-ach-events-v1

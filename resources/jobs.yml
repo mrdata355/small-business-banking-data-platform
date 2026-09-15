@@ -1,0 +1,113 @@
+resources:
+  jobs:
+    application_stream:
+      name: oakbridge-application-stream-${bundle.target}
+      continuous:
+        pause_status: PAUSED
+      job_clusters:
+        - job_cluster_key: streaming_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            autoscale:
+              min_workers: 2
+              max_workers: 6
+            spark_env_vars:
+              OAKBRIDGE_CATALOG: ${var.catalog}
+              OAKBRIDGE_DATA_ROOT: ${var.data_root}
+              OAKBRIDGE_CHECKPOINT_ROOT: ${var.checkpoint_root}
+              OAKBRIDGE_SCHEMA_ROOT: ${var.schema_root}
+              OAKBRIDGE_APPLICATION_STREAM: ${var.application_stream}
+              OAKBRIDGE_ACH_STREAM: ${var.ach_stream}
+              AWS_REGION: ${var.aws_region}
+      tasks:
+        - task_key: application_stream
+          job_cluster_key: streaming_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-application
+          libraries:
+            - whl: ../dist/*.whl
+
+    treasury_stream:
+      name: oakbridge-treasury-stream-${bundle.target}
+      continuous:
+        pause_status: PAUSED
+      job_clusters:
+        - job_cluster_key: streaming_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            autoscale:
+              min_workers: 2
+              max_workers: 6
+            spark_env_vars:
+              OAKBRIDGE_CATALOG: ${var.catalog}
+              OAKBRIDGE_DATA_ROOT: ${var.data_root}
+              OAKBRIDGE_CHECKPOINT_ROOT: ${var.checkpoint_root}
+              OAKBRIDGE_SCHEMA_ROOT: ${var.schema_root}
+              OAKBRIDGE_APPLICATION_STREAM: ${var.application_stream}
+              OAKBRIDGE_ACH_STREAM: ${var.ach_stream}
+              AWS_REGION: ${var.aws_region}
+      tasks:
+        - task_key: ach_stream
+          job_cluster_key: streaming_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-ach
+          libraries:
+            - whl: ../dist/*.whl
+
+    convergence_batch:
+      name: oakbridge-convergence-${bundle.target}
+      schedule:
+        quartz_cron_expression: 0 0 * * * ?
+        timezone_id: UTC
+        pause_status: PAUSED
+      job_clusters:
+        - job_cluster_key: batch_cluster
+          new_cluster:
+            spark_version: 15.4.x-scala2.12
+            node_type_id: i3.xlarge
+            num_workers: 2
+            spark_env_vars:
+              OAKBRIDGE_CATALOG: ${var.catalog}
+              OAKBRIDGE_DATA_ROOT: ${var.data_root}
+              OAKBRIDGE_CHECKPOINT_ROOT: ${var.checkpoint_root}
+              OAKBRIDGE_SCHEMA_ROOT: ${var.schema_root}
+              AWS_REGION: ${var.aws_region}
+      tasks:
+        - task_key: identity
+          job_cluster_key: batch_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-identity
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: onboarding
+          depends_on:
+            - task_key: identity
+          job_cluster_key: batch_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-onboarding
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: gold
+          depends_on:
+            - task_key: onboarding
+          job_cluster_key: batch_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-gold
+          libraries:
+            - whl: ../dist/*.whl
+        - task_key: reconciliation
+          depends_on:
+            - task_key: gold
+          job_cluster_key: batch_cluster
+          python_wheel_task:
+            package_name: oakbridge-banking-data-platform
+            entry_point: oakbridge-dbx-reconciliation
+          libraries:
+            - whl: ../dist/*.whl
