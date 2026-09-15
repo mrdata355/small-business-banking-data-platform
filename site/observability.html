@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Platform Observability</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    .obs-shell{width:min(1280px,calc(100% - 28px));margin:auto}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0}.nav a{color:var(--accent2);text-decoration:none;border:1px solid var(--line);padding:8px 11px;border-radius:9px}.metrics{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:9px}.metric{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:12px}.metric strong{font-size:24px;display:block}.metric span{font-size:11px;color:var(--muted)}.chart-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:14px}.chart-card,.table-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px;min-width:0}.chart-wrap{height:300px}.table-card{margin-top:12px}.table-wrap{overflow:auto;max-height:340px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{text-align:left;padding:8px 9px;border-bottom:1px solid #223248;white-space:nowrap}th{position:sticky;top:0;background:#122034}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.ok{color:#67dfa2}.bad{color:#ff919c}.warn{color:#ffd37d}.heatmap{display:grid;grid-template-columns:160px repeat(3,minmax(70px,1fr));gap:4px;font-size:11px}.heatmap div{padding:7px;border-radius:7px;background:#111f31}.heat-0{opacity:.35}.heat-1{background:#15304e!important}.heat-2{background:#1d5077!important}.heat-3{background:#26769f!important}.heat-4{background:#35a5c8!important;color:#04111b}.comments{display:grid;grid-template-columns:150px 130px 1fr auto;gap:8px}.comments input,.comments select,.comments button{min-height:40px;border:1px solid var(--line);border-radius:8px;background:#0d1929;color:var(--text);padding:8px}.comments button{background:var(--accent);color:#07101d;font-weight:800;cursor:pointer}.statusbar{display:flex;gap:14px;flex-wrap:wrap;color:var(--muted);font-size:12px;margin:12px 0}.pulse{width:9px;height:9px;border-radius:50%;background:#45c486;display:inline-block;margin-right:5px}@media(max-width:900px){.metrics{grid-template-columns:repeat(3,1fr)}.chart-grid{grid-template-columns:1fr}}@media(max-width:600px){.metrics{grid-template-columns:repeat(2,1fr)}.comments{grid-template-columns:1fr}.heatmap{grid-template-columns:120px repeat(3,minmax(56px,1fr))}}
+  </style>
+</head>
+<body>
+  <main class="obs-shell">
+    <nav class="nav"><a href="/">Platform</a><a href="/live.html">Live data</a><a href="/automations.html">Automations</a><a href="/mlops.html">MLOps</a><a href="/semantic.html">Semantic / BI</a><a href="https://github.com/mrdata355/small-business-banking-data-platform" target="_blank">GitHub</a></nav>
+    <p class="eyebrow">REAL-TIME OPERATIONS</p>
+    <h1 style="font-size:clamp(34px,6vw,60px);margin:0">Platform Observability</h1>
+    <p class="lede">Persistent pipeline events, data quality, model predictions, treasury risk, sentiment, deployment history, commits and automation runs.</p>
+    <div class="statusbar"><span><span class="pulse"></span>live backend</span><span id="snapshotTime">loading</span><span id="githubTime">GitHub loading</span></div>
+
+    <section><div class="metrics" id="metrics"></div></section>
+
+    <section class="chart-grid">
+      <div class="chart-card"><h3>Pipeline outcomes over time</h3><div class="chart-wrap"><canvas id="outcomeTimeline"></canvas></div></div>
+      <div class="chart-card"><h3>Outcome distribution</h3><div class="chart-wrap"><canvas id="outcomeChart"></canvas></div></div>
+      <div class="chart-card"><h3>Readiness and data quality radar</h3><div class="chart-wrap"><canvas id="radarChart"></canvas></div></div>
+      <div class="chart-card"><h3>Customer interaction sentiment</h3><div class="chart-wrap"><canvas id="sentimentChart"></canvas></div></div>
+      <div class="chart-card"><h3>Treasury anomaly scores</h3><div class="chart-wrap"><canvas id="treasuryChart"></canvas></div></div>
+      <div class="chart-card"><h3>Model risk predictions</h3><div class="chart-wrap"><canvas id="riskChart"></canvas></div></div>
+    </section>
+
+    <section class="table-card"><h3>Event outcome heatmap</h3><div id="heatmap" class="heatmap"></div></section>
+
+    <section class="table-card"><h3>Pipeline heartbeats</h3><div class="table-wrap"><table><thead><tr><th>Component</th><th>Status</th><th>Processed</th><th>Lag ms</th><th>Last event</th><th>Updated</th></tr></thead><tbody id="healthBody"></tbody></table></div></section>
+
+    <section class="table-card"><h3>Quarantine</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Application</th><th>Event</th><th>Reason</th></tr></thead><tbody id="quarantineBody"></tbody></table></div></section>
+
+    <section class="table-card"><h3>Deployments</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Provider</th><th>Environment</th><th>Status</th><th>Commit</th><th>URL</th></tr></thead><tbody id="deploymentBody"></tbody></table></div></section>
+
+    <section class="table-card"><h3>Recent commits</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>SHA</th><th>Message</th><th>Author</th></tr></thead><tbody id="commitBody"></tbody></table></div></section>
+
+    <section class="table-card"><h3>CI workflow runs</h3><div class="table-wrap"><table><thead><tr><th>Run</th><th>Status</th><th>Conclusion</th><th>Commit</th><th>Started</th></tr></thead><tbody id="workflowBody"></tbody></table></div></section>
+
+    <section class="table-card"><h3>Operator notes</h3><div class="comments"><input id="commentAuthor" maxlength="60" value="operator" aria-label="Author"/><select id="commentSeverity"><option>INFO</option><option>WARN</option><option>ERROR</option><option>RESOLVED</option></select><input id="commentMessage" maxlength="400" placeholder="Add a time-stamped operations note"/><button id="commentButton">Post note</button></div><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>Time</th><th>Component</th><th>Severity</th><th>Author</th><th>Message</th></tr></thead><tbody id="commentBody"></tbody></table></div></section>
+  </main>
+  <script src="/observability.js"></script>
+</body>
+</html>
