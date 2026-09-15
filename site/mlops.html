@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MLOps Control Plane</title>
+  <link rel="stylesheet" href="/styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+  <style>
+    .ml-shell{width:min(1200px,calc(100% - 28px));margin:auto}.nav{display:flex;gap:8px;flex-wrap:wrap;padding:18px 0}.nav a{color:var(--accent2);text-decoration:none;border:1px solid var(--line);padding:8px 11px;border-radius:9px}.controls{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.controls button,.controls select{min-height:42px;border:1px solid var(--line);border-radius:9px;background:#0e1a2a;color:var(--text);padding:8px 11px;font-weight:800}.controls button{cursor:pointer}.controls button.primary{background:var(--accent);color:#07101d}.cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.model-card,.chart-card,.table-card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:15px}.model-card h3{margin:0 0 8px}.model-card p{font-size:13px;color:var(--muted)}.model-card a{color:var(--accent2)}.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}.chart-wrap{height:300px}.table-card{margin-top:14px}.table-wrap{overflow:auto;max-height:420px}table{width:100%;border-collapse:collapse;font-size:12px}th,td{padding:9px;border-bottom:1px solid #223248;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#122034}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}.low{color:#67dfa2}.medium{color:#ffd37d}.high{color:#ff919c}.output{margin:14px 0;background:#0b1625;border:1px solid var(--line);border-radius:12px;padding:12px}.output pre{white-space:pre-wrap;word-break:break-word;color:#cfe0f2;font-size:12px}@media(max-width:850px){.cards,.chart-grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main class="ml-shell">
+  <nav class="nav"><a href="/">Platform</a><a href="/live.html">Live data</a><a href="/observability.html">Observability</a><a href="/automations.html">Automations</a><a href="/semantic.html">Semantic / BI</a><a href="/lakehouse.html">Lakehouse</a></nav>
+  <p class="eyebrow">MODEL OPERATIONS</p>
+  <h1 style="font-size:clamp(34px,6vw,60px);margin:0">MLOps Control Plane</h1>
+  <p class="lede">Persistent scoring evidence in the public demo, plus an executable local MLflow registry, model-training pipeline and model-serving API.</p>
+
+  <div class="controls"><select id="applicationSelect"><option value="">Select application</option></select><button id="scoreOne">Score selected</button><button id="scoreSweep" class="primary">Run scoring sweep</button><button id="refreshButton">Refresh</button></div>
+  <div class="output"><strong>Scoring output</strong><pre id="output">Choose an application or run the sweep.</pre></div>
+
+  <section class="cards">
+    <article class="model-card"><h3>application_operational_risk</h3><p>Gradient-boosted model trained on generated workflow features and registered in MLflow with a <code>champion</code> alias.</p><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/mlops/train_models.py" target="_blank">Training pipeline</a></article>
+    <article class="model-card"><h3>ach_anomaly_detector</h3><p>Isolation Forest model for generated ACH activity. Model artefacts are persisted in the local S3-compatible ML artefact bucket.</p><a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/services/model_api.py" target="_blank">Serving API</a></article>
+    <article class="model-card"><h3>MLflow Registry</h3><p>The full local stack starts MLflow, trains/registers both models and then starts the scoring API.</p><a href="http://localhost:5000" target="_blank">Open local MLflow</a> · <a href="https://github.com/mrdata355/small-business-banking-data-platform/blob/main/docs/MLOPS.md" target="_blank">Architecture</a></article>
+  </section>
+
+  <section class="chart-grid">
+    <div class="chart-card"><h3>Risk-band distribution</h3><div class="chart-wrap"><canvas id="riskBands"></canvas></div></div>
+    <div class="chart-card"><h3>Prediction probability timeline</h3><div class="chart-wrap"><canvas id="riskTimeline"></canvas></div></div>
+    <div class="chart-card"><h3>Treasury anomaly score</h3><div class="chart-wrap"><canvas id="treasuryRisk"></canvas></div></div>
+    <div class="chart-card"><h3>Model versions</h3><div class="chart-wrap"><canvas id="modelVersions"></canvas></div></div>
+  </section>
+
+  <section class="table-card"><h3>Prediction history</h3><div class="table-wrap"><table><thead><tr><th>Scored</th><th>Application</th><th>Model</th><th>Version</th><th>Probability</th><th>Risk band</th><th>Features</th></tr></thead><tbody id="predictionBody"></tbody></table></div></section>
+  <section class="table-card"><h3>Model-related automation runs</h3><div class="table-wrap"><table><thead><tr><th>Time</th><th>Automation</th><th>Status</th><th>Records</th><th>Detail</th></tr></thead><tbody id="runBody"></tbody></table></div></section>
+</main>
+<script src="/mlops.js"></script>
+</body>
+</html>
