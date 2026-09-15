@@ -1,0 +1,34 @@
+version: 1
+metrics:
+  - name: applications_submitted
+    label: Applications Submitted
+    entity: loan_application
+    expression: count(*)
+  - name: applications_ready_for_underwriting
+    label: Applications Ready for Underwriting
+    entity: loan_application
+    expression: count(*) filter (where ready_for_underwriting)
+  - name: total_requested_amount
+    label: Total Requested Amount
+    entity: loan_application
+    expression: sum(requested_amount)
+  - name: ach_credit_amount
+    label: ACH Credit Amount
+    entity: ach_transaction
+    expression: sum(amount) filter (where direction='CREDIT')
+  - name: ach_debit_amount
+    label: ACH Debit Amount
+    entity: ach_transaction
+    expression: sum(amount) filter (where direction='DEBIT')
+  - name: ach_return_rate
+    label: ACH Return Rate
+    entity: ach_transaction
+    expression: count(*) filter (where transaction_status='RETURNED') / nullif(count(*),0)
+  - name: quarantine_rate
+    label: Quarantine Rate
+    entity: pipeline_quality
+    expression: quarantined_events / nullif(stream_arrivals,0)
+  - name: duplicate_delivery_rate
+    label: Duplicate Delivery Rate
+    entity: pipeline_quality
+    expression: duplicates_ignored / nullif(stream_arrivals,0)
