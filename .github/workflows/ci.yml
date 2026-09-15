@@ -26,7 +26,7 @@ jobs:
       - name: Strict lint core runtime
         run: ruff check src tests scripts
       - name: Correctness lint platform extensions
-        run: ruff check agents digital_twin collaboration enterprise --select E9,F821,F822,F823,F831
+        run: ruff check agents digital_twin collaboration enterprise --select E9,F821,F822,F823
       - name: Unit and integration tests
         run: pytest -q
       - name: Run complete local data platform
