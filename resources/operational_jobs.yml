@@ -1,0 +1,98 @@
+resources:
+  jobs:
+    showcase_bootstrap:
+      name: oakbridge-development-bootstrap-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: generate_development_data
+          notebook_task:
+            notebook_path: ../notebooks/databricks/05_bootstrap_showcase_data.py
+
+    reconciliation_control_tower:
+      name: oakbridge-reconciliation-control-tower-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: reconcile_core_domains
+          notebook_task:
+            notebook_path: ../notebooks/databricks/06_reconciliation_control_tower.py
+        - task_key: platform_health
+          depends_on:
+            - task_key: reconcile_core_domains
+          notebook_task:
+            notebook_path: ../notebooks/databricks/11_platform_health.py
+
+    finance_and_management:
+      name: oakbridge-finance-management-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: profitability
+          notebook_task:
+            notebook_path: ../notebooks/databricks/07_finance_profitability.py
+        - task_key: management_kpis
+          depends_on:
+            - task_key: profitability
+          notebook_task:
+            notebook_path: ../notebooks/databricks/10_shareholder_kpis.py
+
+    feature_and_model_monitoring:
+      name: oakbridge-feature-model-monitoring-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: feature_engineering
+          notebook_task:
+            notebook_path: ../notebooks/databricks/08_feature_engineering.py
+        - task_key: model_monitoring
+          depends_on:
+            - task_key: feature_engineering
+          notebook_task:
+            notebook_path: ../notebooks/databricks/09_model_monitoring.py
+
+    full_development_refresh:
+      name: oakbridge-full-development-refresh-${bundle.target}
+      queue:
+        enabled: true
+      tasks:
+        - task_key: bootstrap
+          notebook_task:
+            notebook_path: ../notebooks/databricks/05_bootstrap_showcase_data.py
+        - task_key: medallion
+          depends_on:
+            - task_key: bootstrap
+          run_job_task:
+            job_id: ${resources.jobs.lakeflow_medallion_refresh.id}
+        - task_key: reconcile
+          depends_on:
+            - task_key: medallion
+          notebook_task:
+            notebook_path: ../notebooks/databricks/06_reconciliation_control_tower.py
+        - task_key: finance
+          depends_on:
+            - task_key: medallion
+          notebook_task:
+            notebook_path: ../notebooks/databricks/07_finance_profitability.py
+        - task_key: features
+          depends_on:
+            - task_key: medallion
+          notebook_task:
+            notebook_path: ../notebooks/databricks/08_feature_engineering.py
+        - task_key: model_monitoring
+          depends_on:
+            - task_key: features
+          notebook_task:
+            notebook_path: ../notebooks/databricks/09_model_monitoring.py
+        - task_key: management_kpis
+          depends_on:
+            - task_key: finance
+          notebook_task:
+            notebook_path: ../notebooks/databricks/10_shareholder_kpis.py
+        - task_key: platform_health
+          depends_on:
+            - task_key: reconcile
+            - task_key: model_monitoring
+            - task_key: management_kpis
+          notebook_task:
+            notebook_path: ../notebooks/databricks/11_platform_health.py
