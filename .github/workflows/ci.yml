@@ -21,8 +21,12 @@ jobs:
           python-version: "3.11"
 
       - run: pip install -e ".[dev]"
-      - run: ruff check src tests scripts
-      - run: pytest -q
+      - name: Repository-wide syntax and contract validation
+        run: python scripts/validate_repository.py
+      - name: Lint production Python
+        run: ruff check src tests scripts agents digital_twin collaboration
+      - name: Unit and integration tests
+        run: pytest -q
       - name: Run complete local data platform
         run: python scripts/run_all.py
       - name: Render pipeline evidence
