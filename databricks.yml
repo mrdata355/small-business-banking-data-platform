@@ -30,8 +30,11 @@ targets:
   dev:
     default: true
     mode: development
+    workspace:
+      host: https://dbc-a81c7db4-9f41.cloud.databricks.com
     variables:
       catalog: oakbridge_dev
+
   prod:
     mode: production
     variables:
